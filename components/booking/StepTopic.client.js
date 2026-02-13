@@ -25,10 +25,6 @@ export default function StepTopic({ topics, topicId, setTopicId }) {
               }`}
             >
               <p className="text-base font-semibold text-slate-900">{t.name}</p>
-              <p className="mt-1 text-sm text-slate-600">
-                Select this topic to filter available branches.
-              </p>
-
               <div className="mt-4 flex items-center justify-between">
                 <span
                   className={`text-xs font-semibold ${
