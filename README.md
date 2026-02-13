@@ -1,6 +1,4 @@
 # S26_SE3910_Team2
-Here is a clean, professional, GitHub-ready README file you can paste directly into README.md.
-
 Bank Appointment Booking System
 Overview
 
