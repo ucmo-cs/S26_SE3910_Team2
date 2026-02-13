@@ -1,0 +1,26 @@
+@import "tailwindcss";
+
+:root {
+  --commerce-green: #006747;
+  --commerce-gray: #c7c0b9;
+  --commerce-lime: #78be20;
+}
+
+body {
+  font-family: "Open Sans", Arial, sans-serif;
+}
+
+@keyframes fadeUp {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.fade-up {
+  animation: fadeUp 600ms ease-out both;
+}
