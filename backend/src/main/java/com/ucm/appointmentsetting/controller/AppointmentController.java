@@ -7,6 +7,7 @@ import com.ucm.appointmentsetting.entity.Topic;
 import com.ucm.appointmentsetting.repository.AppointmentRepository;
 import com.ucm.appointmentsetting.repository.BranchRepository;
 import com.ucm.appointmentsetting.repository.TopicRepository;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -44,7 +45,7 @@ public class AppointmentController {
     }
 
     @PostMapping
-    public Appointment createAppointment(@RequestBody AppointmentRequest request) {
+    public ResponseEntity<Appointment> createAppointment(@RequestBody AppointmentRequest request) {
         LocalDateTime dateTime = LocalDateTime.parse(request.getStartISO());
         LocalDate date = dateTime.toLocalDate();
         LocalTime time = dateTime.toLocalTime();
@@ -57,7 +58,7 @@ public class AppointmentController {
                 );
 
         if (conflictExists) {
-            return null;
+            return ResponseEntity.status(409).build();
         }
 
         Topic topic = topicRepository.findById(request.getTopicId()).orElse(null);
@@ -72,6 +73,6 @@ public class AppointmentController {
         appointment.setTopic(topic);
         appointment.setBranch(branch);
 
-        return appointmentRepository.save(appointment);
+        return ResponseEntity.ok(appointmentRepository.save(appointment));
     }
 }
