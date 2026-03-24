@@ -157,18 +157,19 @@ export default function BookingWizard() {
         body: JSON.stringify(bookingPayload),
       });
 
+      if (response.status === 409) {
+        setSubmitError(
+          "This time slot has already been booked. Please choose another time."
+        );
+        return;
+      }
+
       if (!response.ok) {
         setSubmitError("This time slot is no longer available");
         return;
       }
 
-      const text = await response.text();
-      if (!text || text === "null") {
-        setSubmitError("This time slot is no longer available");
-        return;
-      }
-
-      const savedAppointment = JSON.parse(text);
+      const savedAppointment = await response.json();
       router.push(`/confirmation/${savedAppointment.id}`);
     } catch {
       setSubmitError("This time slot is no longer available");
