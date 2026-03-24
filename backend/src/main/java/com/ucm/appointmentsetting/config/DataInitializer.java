@@ -4,9 +4,12 @@ import com.ucm.appointmentsetting.entity.Branch;
 import com.ucm.appointmentsetting.entity.Topic;
 import com.ucm.appointmentsetting.repository.BranchRepository;
 import com.ucm.appointmentsetting.repository.TopicRepository;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.annotation.Order;
 
 import java.util.HashSet;
 import java.util.List;
@@ -17,7 +20,11 @@ import java.util.stream.Collectors;
 @Configuration
 public class DataInitializer {
 
+    @PersistenceContext
+    private EntityManager entityManager;
+
     @Bean
+    @Order(1)
     CommandLineRunner seedTopics(TopicRepository topicRepository) {
         return args -> {
             if (topicRepository.count() > 0) {
@@ -45,6 +52,7 @@ public class DataInitializer {
     }
 
     @Bean
+    @Order(2)
     CommandLineRunner seedBranches(BranchRepository branchRepository) {
         return args -> {
             if (branchRepository.count() > 0) {
@@ -77,6 +85,7 @@ public class DataInitializer {
     }
 
     @Bean
+    @Order(3)
     CommandLineRunner seedBranchTopics(TopicRepository topicRepository, BranchRepository branchRepository) {
         return args -> {
             if (topicRepository.count() == 0 || branchRepository.count() == 0) {
@@ -97,19 +106,37 @@ public class DataInitializer {
             Topic fraudSupport = topicsByName.get("Fraud Support");
 
             Branch downtown = branchesByName.get("Downtown Branch");
-            if (downtown != null && loans != null && creditCards != null) {
+            if (downtown != null
+                    && loans != null
+                    && creditCards != null
+                    && entityManager.createQuery(
+                            "select count(t) from Branch b join b.topics t where b.id = :branchId",
+                            Long.class
+                    ).setParameter("branchId", downtown.getId()).getSingleResult() == 0) {
                 downtown.setTopics(new HashSet<>(List.of(loans, creditCards)));
                 branchRepository.save(downtown);
             }
 
             Branch south = branchesByName.get("South Branch");
-            if (south != null && creditCards != null && newAccounts != null) {
+            if (south != null
+                    && creditCards != null
+                    && newAccounts != null
+                    && entityManager.createQuery(
+                            "select count(t) from Branch b join b.topics t where b.id = :branchId",
+                            Long.class
+                    ).setParameter("branchId", south.getId()).getSingleResult() == 0) {
                 south.setTopics(new HashSet<>(List.of(creditCards, newAccounts)));
                 branchRepository.save(south);
             }
 
             Branch north = branchesByName.get("North Branch");
-            if (north != null && newAccounts != null && fraudSupport != null) {
+            if (north != null
+                    && newAccounts != null
+                    && fraudSupport != null
+                    && entityManager.createQuery(
+                            "select count(t) from Branch b join b.topics t where b.id = :branchId",
+                            Long.class
+                    ).setParameter("branchId", north.getId()).getSingleResult() == 0) {
                 north.setTopics(new HashSet<>(List.of(newAccounts, fraudSupport)));
                 branchRepository.save(north);
             }
