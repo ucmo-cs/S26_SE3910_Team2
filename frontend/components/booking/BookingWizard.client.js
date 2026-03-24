@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 
 import { nextNDays } from "../../lib/slots";
@@ -32,9 +32,17 @@ export default function BookingWizard() {
   const [email, setEmail] = useState("");
   const [reason, setReason] = useState("");
   const [slotsForSelectedDay, setSlotsForSelectedDay] = useState([]);
+  const [isLoadingAvailability, setIsLoadingAvailability] = useState(false);
   const [submitError, setSubmitError] = useState("");
+  const [slotUnavailable, setSlotUnavailable] = useState(false);
+  const [staleSlotISO, setStaleSlotISO] = useState("");
   const [topics, setTopics] = useState([]);
   const [branches, setBranches] = useState([]);
+  const latestSlotISO = useRef("");
+
+  useEffect(() => {
+    latestSlotISO.current = slotISO;
+  }, [slotISO]);
 
   useEffect(() => {
     async function loadTopics() {
@@ -90,10 +98,12 @@ export default function BookingWizard() {
     async function loadAvailability() {
       if (!branchId || !dateISO) {
         setSlotsForSelectedDay([]);
+        setIsLoadingAvailability(false);
         return;
       }
 
       const dateKey = dateISO.slice(0, 10);
+      setIsLoadingAvailability(true);
 
       try {
         const response = await fetch(
@@ -102,15 +112,24 @@ export default function BookingWizard() {
 
         if (!response.ok) {
           setSlotsForSelectedDay([]);
+          setIsLoadingAvailability(false);
           return;
         }
 
         const times = await response.json();
-        setSlotsForSelectedDay(
-          times.map((time) => `${dateKey}T${time}:00`)
-        );
+        const nextSlots = times.map((time) => `${dateKey}T${time}:00`);
+
+        setSlotsForSelectedDay(nextSlots);
+
+        if (latestSlotISO.current && !nextSlots.includes(latestSlotISO.current)) {
+          setSlotUnavailable(true);
+          setStaleSlotISO(latestSlotISO.current);
+          setSlotISO("");
+        }
       } catch {
         setSlotsForSelectedDay([]);
+      } finally {
+        setIsLoadingAvailability(false);
       }
     }
 
@@ -194,6 +213,8 @@ export default function BookingWizard() {
         {step === 0 && (
           <StepTopic topics={topics} topicId={topicId} setTopicId={(id) => {
             setTopicId(id);
+            setSlotUnavailable(false);
+            setStaleSlotISO("");
             setBranchId("");
             setDateISO("");
             setSlotISO("");
@@ -206,6 +227,8 @@ export default function BookingWizard() {
             branchId={branchId}
             setBranchId={(id) => {
               setBranchId(id);
+              setSlotUnavailable(false);
+              setStaleSlotISO("");
               setDateISO("");
               setSlotISO("");
             }}
@@ -218,12 +241,21 @@ export default function BookingWizard() {
             dateISO={dateISO}
             setDateISO={(iso) => {
               setDateISO(iso);
+              setSlotUnavailable(false);
+              setStaleSlotISO("");
               setSlotISO("");
             }}
             slots={slotsForSelectedDay}
             slotISO={slotISO}
-            setSlotISO={setSlotISO}
+            setSlotISO={(iso) => {
+              setSlotUnavailable(false);
+              setStaleSlotISO("");
+              setSlotISO(iso);
+            }}
             branchId={branchId}
+            isLoadingAvailability={isLoadingAvailability}
+            slotUnavailable={slotUnavailable}
+            staleSlotISO={staleSlotISO}
           />
         )}
 
