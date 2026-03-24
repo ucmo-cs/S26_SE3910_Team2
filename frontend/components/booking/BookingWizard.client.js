@@ -32,6 +32,7 @@ export default function BookingWizard() {
   const [email, setEmail] = useState("");
   const [reason, setReason] = useState("");
   const [slotsForSelectedDay, setSlotsForSelectedDay] = useState([]);
+  const [isLoadingAvailability, setIsLoadingAvailability] = useState(false);
   const [submitError, setSubmitError] = useState("");
   const [slotUnavailable, setSlotUnavailable] = useState(false);
   const [staleSlotISO, setStaleSlotISO] = useState("");
@@ -97,10 +98,12 @@ export default function BookingWizard() {
     async function loadAvailability() {
       if (!branchId || !dateISO) {
         setSlotsForSelectedDay([]);
+        setIsLoadingAvailability(false);
         return;
       }
 
       const dateKey = dateISO.slice(0, 10);
+      setIsLoadingAvailability(true);
 
       try {
         const response = await fetch(
@@ -109,6 +112,7 @@ export default function BookingWizard() {
 
         if (!response.ok) {
           setSlotsForSelectedDay([]);
+          setIsLoadingAvailability(false);
           return;
         }
 
@@ -124,6 +128,8 @@ export default function BookingWizard() {
         }
       } catch {
         setSlotsForSelectedDay([]);
+      } finally {
+        setIsLoadingAvailability(false);
       }
     }
 
@@ -247,6 +253,7 @@ export default function BookingWizard() {
               setSlotISO(iso);
             }}
             branchId={branchId}
+            isLoadingAvailability={isLoadingAvailability}
             slotUnavailable={slotUnavailable}
             staleSlotISO={staleSlotISO}
           />

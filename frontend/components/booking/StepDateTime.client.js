@@ -10,6 +10,7 @@ export default function StepDateTime({
   slotISO,
   setSlotISO,
   branchId,
+  isLoadingAvailability,
   slotUnavailable,
   staleSlotISO,
 }) {
@@ -86,6 +87,10 @@ export default function StepDateTime({
             {!dateISO ? (
               <div className="mt-3 rounded-2xl border border-slate-200 bg-slate-50 p-5 text-slate-700">
                 Pick a date to see times.
+              </div>
+            ) : isLoadingAvailability ? (
+              <div className="mt-3 rounded-2xl border border-slate-200 bg-slate-50 p-5 text-slate-700">
+                Loading available times...
               </div>
             ) : (
               <>
