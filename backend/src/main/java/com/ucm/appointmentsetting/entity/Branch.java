@@ -1,5 +1,6 @@
 package com.ucm.appointmentsetting.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -54,6 +55,7 @@ public class Branch {
             joinColumns = @JoinColumn(name = "branch_id"),
             inverseJoinColumns = @JoinColumn(name = "topic_id")
     )
+    @JsonIgnore
     private Set<Topic> topics = new HashSet<>();
 
     public Branch() {
