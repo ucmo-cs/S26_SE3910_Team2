@@ -1,1 +1,14 @@
 .DS_Store
+# Gradle
+.gradle/
+build/
+
+# Mac
+.DS_Store
+
+# IDE
+.idea/
+.vscode/
+
+# Logs
+*.log
