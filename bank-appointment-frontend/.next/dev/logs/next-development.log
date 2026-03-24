@@ -1,0 +1,5 @@
+[00:00:01.393] Server  LOG     ✓ Ready in 1207ms
+[00:00:04.985] Browser WARN    Image with src "/homepageImg.jpg" has "fill" but is missing "sizes" prop. Please add it to improve page performance. Read more: https://nextjs.org/docs/api-reference/next/image#sizes
+[72:43:09.781] Browser WARN    Image with src "/homepageImg.jpg" has "fill" but is missing "sizes" prop. Please add it to improve page performance. Read more: https://nextjs.org/docs/api-reference/next/image#sizes
+[72:43:32.342] Browser WARN    Image with src "/homepageImg.jpg" has "fill" but is missing "sizes" prop. Please add it to improve page performance. Read more: https://nextjs.org/docs/api-reference/next/image#sizes
+[72:46:03.344] Browser WARN    Image with src "/homepageImg.jpg" has "fill" but is missing "sizes" prop. Please add it to improve page performance. Read more: https://nextjs.org/docs/api-reference/next/image#sizes

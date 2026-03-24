@@ -1,0 +1,6 @@
+{
+  "version": 3,
+  "sources": [],
+  "sections": [
+    {"offset": {"line": 4, "column": 0}, "map": {"version":3,"sources":["file:///Users/lilywallace/Desktop/commercebank/bank-appointment-frontend/app/book/layout.js"],"sourcesContent":["export default function BookLayout({ children }) {\n  return (\n    <div className=\"min-h-screen bg-gradient-to-b from-white via-white to-slate-50\">\n      {/* Green accent bar */}\n      <div className=\"h-2 w-full bg-[#78be20]\" />\n\n      <div className=\"px-6 py-8\">{children}</div>\n    </div>\n  );\n}\n"],"names":[],"mappings":";;;;;;AAAe,SAAS,WAAW,EAAE,QAAQ,EAAE;IAC7C,qBACE,8OAAC;QAAI,WAAU;;0BAEb,8OAAC;gBAAI,WAAU;;;;;;0BAEf,8OAAC;gBAAI,WAAU;0BAAa;;;;;;;;;;;;AAGlC"}}]
+}

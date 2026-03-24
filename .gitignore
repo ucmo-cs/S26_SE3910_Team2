@@ -19,6 +19,8 @@
 
 # production
 /build
+/backend/build
+/backend/.gradle
 
 # misc
 .DS_Store
@@ -32,6 +34,7 @@ yarn-error.log*
 
 # env files (can opt-in for committing if needed)
 .env*
+backend/.env*
 
 # vercel
 .vercel

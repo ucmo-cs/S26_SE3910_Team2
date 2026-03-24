@@ -1,5 +1,24 @@
 This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
 
+## Backend
+
+A Spring Boot backend lives in `backend/`.
+
+### Run the backend
+
+```bash
+cd backend
+GRADLE_USER_HOME=/tmp/commercebank-gradle ./gradlew bootRun
+```
+
+The backend starts on [http://localhost:8080](http://localhost:8080).
+
+Health check:
+
+```bash
+curl http://localhost:8080/api/health
+```
+
 ## Getting Started
 
 First, run the development server:
