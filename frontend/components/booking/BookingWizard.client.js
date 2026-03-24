@@ -1,13 +1,9 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 
-import { topics } from "../../data/topics";
-import { branches } from "../../data/branches";
-import { branchHours } from "../../data/hours";
-import { nextNDays, buildSlotsForDate } from "../../lib/slots";
-import { isSlotBooked, saveBooking } from "../../lib/bookingStorage";
+import { nextNDays } from "../../lib/slots";
 
 import StepTopic from "./StepTopic.client";
 import StepBranch from "./StepBranch.client";
@@ -35,26 +31,90 @@ export default function BookingWizard() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [reason, setReason] = useState("");
+  const [slotsForSelectedDay, setSlotsForSelectedDay] = useState([]);
+  const [submitError, setSubmitError] = useState("");
+  const [topics, setTopics] = useState([]);
+  const [branches, setBranches] = useState([]);
 
-  const availableBranches = useMemo(() => {
-    if (!topicId) return [];
-    return branches.filter((b) => b.topicIds.includes(topicId));
+  useEffect(() => {
+    async function loadTopics() {
+      try {
+        const response = await fetch("http://localhost:8080/api/topics");
+        if (!response.ok) {
+          setTopics([]);
+          return;
+        }
+
+        const data = await response.json();
+        setTopics(data);
+      } catch {
+        setTopics([]);
+      }
+    }
+
+    loadTopics();
+  }, []);
+
+  useEffect(() => {
+    async function loadBranches() {
+      if (!topicId) {
+        setBranches([]);
+        return;
+      }
+
+      try {
+        const response = await fetch(
+          `http://localhost:8080/api/branches?topicId=${topicId}`
+        );
+        if (!response.ok) {
+          setBranches([]);
+          return;
+        }
+
+        const data = await response.json();
+        setBranches(data);
+      } catch {
+        setBranches([]);
+      }
+    }
+
+    loadBranches();
   }, [topicId]);
 
   const days = useMemo(() => nextNDays(14), []);
 
-  const selectedBranch = branches.find((b) => b.id === branchId) || null;
-  const selectedTopic = topics.find((t) => t.id === topicId) || null;
+  const selectedBranch = branches.find((b) => String(b.id) === String(branchId)) || null;
+  const selectedTopic = topics.find((t) => String(t.id) === String(topicId)) || null;
 
-  const slotsForSelectedDay = useMemo(() => {
-    if (!branchId || !dateISO) return [];
+  useEffect(() => {
+    async function loadAvailability() {
+      if (!branchId || !dateISO) {
+        setSlotsForSelectedDay([]);
+        return;
+      }
 
-    const day = new Date(dateISO);
-    const dow = day.getDay();
-    const hours = branchHours[branchId]?.[dow] ?? null;
-    const allSlots = buildSlotsForDate(day, hours);
+      const dateKey = dateISO.slice(0, 10);
 
-    return allSlots.filter((iso) => !isSlotBooked(branchId, iso));
+      try {
+        const response = await fetch(
+          `http://localhost:8080/api/availability?branchId=${branchId}&date=${dateKey}`
+        );
+
+        if (!response.ok) {
+          setSlotsForSelectedDay([]);
+          return;
+        }
+
+        const times = await response.json();
+        setSlotsForSelectedDay(
+          times.map((time) => `${dateKey}T${time}:00`)
+        );
+      } catch {
+        setSlotsForSelectedDay([]);
+      }
+    }
+
+    loadAvailability();
   }, [branchId, dateISO]);
 
   function canNext() {
@@ -74,20 +134,46 @@ export default function BookingWizard() {
     setStep((s) => Math.max(s - 1, 0));
   }
 
-  function submit() {
+  async function submit() {
     const id = makeId();
-    const booking = {
+    const bookingPayload = {
       id,
       name,
       email,
-      topicId,
-      branchId,
+      topicId: Number(topicId),
+      branchId: Number(branchId),
       startISO: slotISO,
       reason,
     };
 
-    saveBooking(booking);
-    router.push(`/confirmation/${id}`);
+    setSubmitError("");
+
+    try {
+      const response = await fetch("http://localhost:8080/api/appointments", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(bookingPayload),
+      });
+
+      if (!response.ok) {
+        setSubmitError("This time slot is no longer available");
+        return;
+      }
+
+      const text = await response.text();
+      if (!text || text === "null") {
+        setSubmitError("This time slot is no longer available");
+        return;
+      }
+
+      const savedAppointment = JSON.parse(text);
+      router.push(`/confirmation/${savedAppointment.id}`);
+    } catch {
+      setSubmitError("This time slot is no longer available");
+      return;
+    }
   }
 
   return (
@@ -95,7 +181,7 @@ export default function BookingWizard() {
       <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
         <h1 className="text-2xl font-bold">Book an Appointment</h1>
         <p className="mt-2 text-slate-600">
-          Prototype flow: topic → branch → date/time → details → confirmation.
+          Topic → branch → date/time → details → confirmation.
         </p>
 
         <div className="mt-6">
@@ -115,7 +201,7 @@ export default function BookingWizard() {
 
         {step === 1 && (
           <StepBranch
-            branches={availableBranches}
+            branches={branches}
             branchId={branchId}
             setBranchId={(id) => {
               setBranchId(id);
@@ -161,6 +247,12 @@ export default function BookingWizard() {
             reason={reason}
           />
         )}
+
+        {submitError ? (
+          <div className="mt-6 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+            {submitError}
+          </div>
+        ) : null}
 
         <div className="mt-8 flex items-center justify-between">
             <CommerceButton

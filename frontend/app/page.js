@@ -78,7 +78,7 @@ export default function Home() {
               <div className="border-t border-slate-200 p-4">
                 <p className="text-sm font-semibold text-slate-900">Prototype goals</p>
                 <p className="mt-1 text-sm text-slate-600">
-                  Build the complete booking UX now, then swap mock data for Spring Boot APIs later.
+                  Book topics, branches, and appointments through the connected Spring Boot APIs.
                 </p>
               </div>
             </div>

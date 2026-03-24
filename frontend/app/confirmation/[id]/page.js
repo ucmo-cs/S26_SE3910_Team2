@@ -1,26 +1,43 @@
 "use client";
 
 import Link from "next/link";
+import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
-import { getBookings } from "../../../lib/bookingStorage";
-import { branches } from "../../../data/branches";
-import { topics } from "../../../data/topics";
 import { formatTimeFromISO } from "../../../lib/format";
-
-function findTopicName(topicId) {
-  return topics.find((t) => t.id === topicId)?.name || topicId;
-}
-
-function findBranch(branchId) {
-  return branches.find((b) => b.id === branchId) || null;
-}
 
 export default function ConfirmationPage() {
   const params = useParams();
   const id = params?.id;
+  const [booking, setBooking] = useState(null);
+  const [loaded, setLoaded] = useState(false);
 
-  const booking = getBookings().find((b) => b.id === id) || null;
-  const branch = booking ? findBranch(booking.branchId) : null;
+  useEffect(() => {
+    async function loadAppointment() {
+      if (!id) return;
+
+      try {
+        const response = await fetch(`http://localhost:8080/api/appointments/${id}`);
+        if (!response.ok) {
+          setBooking(null);
+          setLoaded(true);
+          return;
+        }
+
+        const data = await response.json();
+        setBooking(data);
+      } catch {
+        setBooking(null);
+      } finally {
+        setLoaded(true);
+      }
+    }
+
+    loadAppointment();
+  }, [id]);
+
+  const slotISO = booking
+    ? `${booking.appointmentDate}T${booking.appointmentTime}`
+    : "";
 
   return (
     <main className="min-h-screen bg-gradient-to-b from-white via-white to-slate-50">
@@ -63,13 +80,19 @@ export default function ConfirmationPage() {
         </div>
 
         {/* Content */}
-        {!booking ? (
+        {!loaded ? (
+          <div className="fade-up mt-8 rounded-2xl border border-slate-200 bg-white p-8 shadow-sm">
+            <h2 className="text-lg font-semibold text-slate-900">
+              Loading appointment
+            </h2>
+          </div>
+        ) : !booking ? (
           <div className="fade-up mt-8 rounded-2xl border border-slate-200 bg-white p-8 shadow-sm">
             <h2 className="text-lg font-semibold text-slate-900">
               We couldn’t find that booking
             </h2>
             <p className="mt-2 text-slate-600">
-              This can happen if local storage was cleared. Try booking again.
+              Try booking again.
             </p>
 
             <div className="mt-6 flex flex-wrap gap-3">
@@ -112,7 +135,7 @@ export default function ConfirmationPage() {
                     Topic
                   </p>
                   <p className="mt-1 font-semibold text-slate-900">
-                    {findTopicName(booking.topicId)}
+                    {booking.topic?.name || "-"}
                   </p>
                 </div>
 
@@ -121,10 +144,10 @@ export default function ConfirmationPage() {
                     Time
                   </p>
                   <p className="mt-1 font-semibold text-slate-900">
-                    {formatTimeFromISO(booking.startISO)}
+                    {formatTimeFromISO(slotISO)}
                   </p>
                   <p className="mt-1 text-xs text-slate-500 break-all">
-                    {booking.startISO}
+                    {slotISO}
                   </p>
                 </div>
 
@@ -133,10 +156,10 @@ export default function ConfirmationPage() {
                     Branch
                   </p>
                   <p className="mt-1 font-semibold text-slate-900">
-                    {branch?.name || booking.branchId}
+                    {booking.branch?.name || "-"}
                   </p>
                   <p className="mt-1 text-sm text-slate-600">
-                    {branch?.address || "Address not available in mock data."}
+                    {booking.branch?.address || ""}
                   </p>
                 </div>
 
@@ -144,7 +167,7 @@ export default function ConfirmationPage() {
                   <p className="text-xs font-semibold uppercase tracking-widest text-slate-500">
                     Name
                   </p>
-                  <p className="mt-1 font-semibold text-slate-900">{booking.name}</p>
+                  <p className="mt-1 font-semibold text-slate-900">{booking.fullName}</p>
                 </div>
 
                 <div>
@@ -159,7 +182,7 @@ export default function ConfirmationPage() {
                 <p className="text-xs font-semibold uppercase tracking-widest text-slate-500">
                   Notes
                 </p>
-                <p className="mt-2 text-slate-700">{booking.reason}</p>
+                <p className="mt-2 text-slate-700">{booking.notes}</p>
               </div>
 
               <div className="mt-8 flex flex-wrap gap-3">
@@ -208,7 +231,7 @@ export default function ConfirmationPage() {
               <div className="mt-6 h-px w-full bg-gradient-to-r from-transparent via-slate-300 to-transparent" />
 
               <p className="mt-6 text-xs text-slate-500">
-                Prototype note: data is stored in local storage for front-end behavior testing.
+                Your appointment details are being loaded from the backend.
               </p>
             </div>
           </div>
