@@ -2,6 +2,7 @@ package com.ucm.appointmentsetting.controller;
 
 import com.ucm.appointmentsetting.entity.Appointment;
 import com.ucm.appointmentsetting.repository.AppointmentRepository;
+import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -14,6 +15,7 @@ import java.util.List;
 import java.util.Set;
 
 @RestController
+@CrossOrigin(origins = "http://localhost:3000")
 @RequestMapping("/api/availability")
 public class AvailabilityController {
 

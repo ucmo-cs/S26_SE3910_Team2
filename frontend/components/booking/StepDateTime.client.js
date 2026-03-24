@@ -95,7 +95,7 @@ export default function StepDateTime({
 
           {/* Helper text */}
           <div className="rounded-2xl border border-slate-200 bg-white p-4 text-sm text-slate-600">
-            Tip: After confirming, this slot will be “reserved” (stored locally) and will no longer appear as available.
+            Tip: After confirming, this slot will be reserved and will no longer appear as available.
           </div>
         </>
       )}

@@ -70,7 +70,7 @@ export default function StepConfirm({
       </div>
 
       <div className="rounded-2xl border border-slate-200 bg-white p-4 text-sm text-slate-600">
-        When you click <span className="font-semibold">Confirm Appointment</span>, this time slot will become unavailable for other users (prototype uses local storage).
+        When you click <span className="font-semibold">Confirm Appointment</span>, this time slot will become unavailable for other users.
       </div>
     </div>
   );
