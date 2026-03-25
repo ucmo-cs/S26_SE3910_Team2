@@ -7,6 +7,7 @@ import com.ucm.appointmentsetting.entity.Topic;
 import com.ucm.appointmentsetting.repository.AppointmentRepository;
 import com.ucm.appointmentsetting.repository.BranchRepository;
 import com.ucm.appointmentsetting.repository.TopicRepository;
+import com.ucm.appointmentsetting.service.AppointmentService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -25,18 +26,12 @@ import java.time.LocalTime;
 @RequestMapping("/api/appointments")
 public class AppointmentController {
 
+    private final AppointmentService appointmentService;
     private final AppointmentRepository appointmentRepository;
-    private final TopicRepository topicRepository;
-    private final BranchRepository branchRepository;
 
-    public AppointmentController(
-            AppointmentRepository appointmentRepository,
-            TopicRepository topicRepository,
-            BranchRepository branchRepository
-    ) {
+    public AppointmentController(AppointmentService appointmentService, AppointmentRepository appointmentRepository) {
+        this.appointmentService = appointmentService;
         this.appointmentRepository = appointmentRepository;
-        this.topicRepository = topicRepository;
-        this.branchRepository = branchRepository;
     }
 
     @GetMapping("/{id}")
@@ -46,33 +41,10 @@ public class AppointmentController {
 
     @PostMapping
     public ResponseEntity<Appointment> createAppointment(@RequestBody AppointmentRequest request) {
-        LocalDateTime dateTime = LocalDateTime.parse(request.getStartISO());
-        LocalDate date = dateTime.toLocalDate();
-        LocalTime time = dateTime.toLocalTime();
-
-        boolean conflictExists = appointmentRepository.findAll().stream()
-                .anyMatch(appointment ->
-                        appointment.getBranch().getId().equals(request.getBranchId())
-                                && appointment.getAppointmentDate().equals(date)
-                                && appointment.getAppointmentTime().equals(time)
-                );
-
-        if (conflictExists) {
+        Appointment appointment = appointmentService.bookAppointment(request);
+        if (appointment == null) {
             return ResponseEntity.status(409).build();
         }
-
-        Topic topic = topicRepository.findById(request.getTopicId()).orElse(null);
-        Branch branch = branchRepository.findById(request.getBranchId()).orElse(null);
-
-        Appointment appointment = new Appointment();
-        appointment.setFullName(request.getName());
-        appointment.setEmail(request.getEmail());
-        appointment.setAppointmentDate(date);
-        appointment.setAppointmentTime(time);
-        appointment.setNotes(request.getReason());
-        appointment.setTopic(topic);
-        appointment.setBranch(branch);
-
-        return ResponseEntity.ok(appointmentRepository.save(appointment));
+        return ResponseEntity.ok(appointment);
     }
 }
