@@ -14,13 +14,43 @@ export default function StepDateTime({
   slotUnavailable,
   staleSlotISO,
 }) {
-  const allSlots = dateISO
-    ? Array.from({ length: 16 }, (_, index) => {
-        const hour = String(9 + Math.floor(index / 2)).padStart(2, "0");
-        const minute = index % 2 === 0 ? "00" : "30";
-        return `${dateISO.slice(0, 10)}T${hour}:${minute}:00`;
-      })
-    : [];
+  const now = new Date();
+
+  function getLocalDateKey(value) {
+    const date = new Date(value);
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const day = String(date.getDate()).padStart(2, "0");
+    return `${year}-${month}-${day}`;
+  }
+
+  function buildAllSlotsForDate(value) {
+    const dayKey = getLocalDateKey(value);
+
+    return Array.from({ length: 16 }, (_, index) => {
+      const hour = String(9 + Math.floor(index / 2)).padStart(2, "0");
+      const minute = index % 2 === 0 ? "00" : "30";
+      return `${dayKey}T${hour}:${minute}:00`;
+    });
+  }
+
+  const todayKey = getLocalDateKey(now);
+
+  const allSlots = dateISO ? buildAllSlotsForDate(dateISO) : [];
+
+  const visibleSlots =
+    dateISO && getLocalDateKey(dateISO) === todayKey
+      ? allSlots.filter((iso) => new Date(iso) > now)
+      : allSlots;
+
+  const visibleDays = days.filter((d) => {
+    const dayKey = getLocalDateKey(d);
+
+    if (dayKey !== todayKey) return true;
+
+    const todaysSlots = buildAllSlotsForDate(d);
+    return todaysSlots.some((iso) => new Date(iso) > now);
+  });
 
   function handleSelectSlot(iso) {
     if (!slots.includes(iso)) return;
@@ -31,9 +61,7 @@ export default function StepDateTime({
     <div className="space-y-5">
       <div>
         <h2 className="text-xl font-bold text-slate-900">Select Date & Time</h2>
-        <p className="mt-1 text-slate-600">
-          Appointments are 30 minutes. Unavailable slots are shown in red.
-        </p>
+        <p className="mt-1 text-slate-600">Appointments are 30 minutes.</p>
       </div>
 
       {!branchId ? (
@@ -46,7 +74,7 @@ export default function StepDateTime({
           <div>
             <p className="text-sm font-semibold text-slate-700">Choose a date</p>
             <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-              {days.map((d) => {
+              {visibleDays.map((d) => {
                 const iso = new Date(d).toISOString();
                 const active = iso === dateISO;
 
@@ -101,30 +129,28 @@ export default function StepDateTime({
                 ) : null}
 
                 <div className="mt-3 flex flex-wrap gap-3">
-                  {allSlots.map((iso) => {
-                    const active = iso === slotISO;
-                    const available = slots.includes(iso);
-                    const stale = slotUnavailable && iso === staleSlotISO;
+                  {visibleSlots
+                    .filter((iso) => slots.includes(iso))
+                    .map((iso) => {
+                      const active = iso === slotISO;
+                      const stale = slotUnavailable && iso === staleSlotISO;
 
-                    return (
-                      <button
-                        type="button"
-                        key={iso}
-                        disabled={!available}
-                        onClick={() => handleSelectSlot(iso)}
-                        className={`rounded-full border px-4 py-1.5 text-sm transition-all duration-200 ${
-                          active
-                            ? "border-[#006747] bg-[#006747]/10 text-slate-900"
-                            : available
-                              ? "border-slate-200 bg-white hover:-translate-y-0.5 hover:bg-slate-50 hover:shadow-sm"
-                              : "cursor-not-allowed border-red-200 bg-red-50 text-red-700 opacity-90"
-                        }`}
-                      >
-                        {formatTimeFromISO(iso)}
-                        {stale ? " Unavailable" : ""}
-                      </button>
-                    );
-                  })}
+                      return (
+                        <button
+                          type="button"
+                          key={iso}
+                          onClick={() => handleSelectSlot(iso)}
+                          className={`rounded-full border px-4 py-1.5 text-sm transition-all duration-200 ${
+                            active
+                              ? "border-[#006747] bg-[#006747]/10 text-slate-900"
+                              : "border-slate-200 bg-white hover:-translate-y-0.5 hover:bg-slate-50 hover:shadow-sm"
+                          }`}
+                        >
+                          {formatTimeFromISO(iso)}
+                          {stale ? " Unavailable" : ""}
+                        </button>
+                      );
+                    })}
                 </div>
               </>
             )}
