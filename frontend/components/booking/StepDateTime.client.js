@@ -38,6 +38,7 @@ export default function StepDateTime({
 
   const allSlots = dateISO ? buildAllSlotsForDate(dateISO) : [];
 
+  // KEEP: hide past times for today
   const visibleSlots =
     dateISO && getLocalDateKey(dateISO) === todayKey
       ? allSlots.filter((iso) => new Date(iso) > now)
@@ -61,7 +62,9 @@ export default function StepDateTime({
     <div className="space-y-5">
       <div>
         <h2 className="text-xl font-bold text-slate-900">Select Date & Time</h2>
-        <p className="mt-1 text-slate-600">Appointments are 30 minutes.</p>
+        <p className="mt-1 text-slate-600">
+          Appointments are 30 minutes. Unavailable slots are shown in red.
+        </p>
       </div>
 
       {!branchId ? (
@@ -129,28 +132,30 @@ export default function StepDateTime({
                 ) : null}
 
                 <div className="mt-3 flex flex-wrap gap-3">
-                  {visibleSlots
-                    .filter((iso) => slots.includes(iso))
-                    .map((iso) => {
-                      const active = iso === slotISO;
-                      const stale = slotUnavailable && iso === staleSlotISO;
+                  {visibleSlots.map((iso) => {
+                    const active = iso === slotISO;
+                    const available = slots.includes(iso);
+                    const stale = slotUnavailable && iso === staleSlotISO;
 
-                      return (
-                        <button
-                          type="button"
-                          key={iso}
-                          onClick={() => handleSelectSlot(iso)}
-                          className={`rounded-full border px-4 py-1.5 text-sm transition-all duration-200 ${
-                            active
-                              ? "border-[#006747] bg-[#006747]/10 text-slate-900"
-                              : "border-slate-200 bg-white hover:-translate-y-0.5 hover:bg-slate-50 hover:shadow-sm"
-                          }`}
-                        >
-                          {formatTimeFromISO(iso)}
-                          {stale ? " Unavailable" : ""}
-                        </button>
-                      );
-                    })}
+                    return (
+                      <button
+                        type="button"
+                        key={iso}
+                        disabled={!available}
+                        onClick={() => handleSelectSlot(iso)}
+                        className={`rounded-full border px-4 py-1.5 text-sm transition-all duration-200 ${
+                          active
+                            ? "border-[#006747] bg-[#006747]/10 text-slate-900"
+                            : available
+                              ? "border-slate-200 bg-white hover:-translate-y-0.5 hover:bg-slate-50 hover:shadow-sm"
+                              : "cursor-not-allowed border-red-200 bg-red-50 text-red-700 opacity-90"
+                        }`}
+                      >
+                        {formatTimeFromISO(iso)}
+                        {stale ? " Unavailable" : ""}
+                      </button>
+                    );
+                  })}
                 </div>
               </>
             )}
