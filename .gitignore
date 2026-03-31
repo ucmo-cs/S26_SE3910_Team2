@@ -12,3 +12,6 @@ build/
 
 # Logs
 *.log
+
+# Ignore application.properties
+src/main/resources/application.properties

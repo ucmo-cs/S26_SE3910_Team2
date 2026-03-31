@@ -19,18 +19,20 @@ function makeId() {
   return Math.random().toString(36).slice(2, 10);
 }
 
+
 export default function BookingWizard() {
   const router = useRouter();
 
   const [step, setStep] = useState(0);
   const [topicId, setTopicId] = useState("");
   const [branchId, setBranchId] = useState("");
-  const [dateISO, setDateISO] = useState(""); // yyyy-mm-dd string-ish (we’ll store as ISO midnight)
-  const [slotISO, setSlotISO] = useState(""); // ISO datetime for slot start
+  const [dateISO, setDateISO] = useState("");
+  const [slotISO, setSlotISO] = useState("");
 
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [reason, setReason] = useState("");
+  const [emailValid, setEmailValid] = useState(false);
   const [slotsForSelectedDay, setSlotsForSelectedDay] = useState([]);
   const [isLoadingAvailability, setIsLoadingAvailability] = useState(false);
   const [submitError, setSubmitError] = useState("");
@@ -140,20 +142,24 @@ export default function BookingWizard() {
     if (step === 0) return Boolean(topicId);
     if (step === 1) return Boolean(branchId);
     if (step === 2) return Boolean(dateISO && slotISO);
-    if (step === 3) return Boolean(name && email && reason);
+    if (step === 3) return Boolean(name && email && reason && emailValid);
     return true;
   }
 
+
   function next() {
     if (!canNext()) return;
+    setSubmitError(null); // Clear error when navigating forward
     setStep((s) => Math.min(s + 1, STEPS.length - 1));
   }
 
   function back() {
+    setSubmitError(null); // Clear error when navigating backward
     setStep((s) => Math.max(s - 1, 0));
   }
 
   async function submit() {
+    setSubmitError(null); // Clear error when retrying booking
     const id = makeId();
     const bookingPayload = {
       id,
@@ -164,8 +170,6 @@ export default function BookingWizard() {
       startISO: slotISO,
       reason,
     };
-
-    setSubmitError("");
 
     try {
       const response = await fetch("http://localhost:8080/api/appointments", {
@@ -244,6 +248,7 @@ export default function BookingWizard() {
               setSlotUnavailable(false);
               setStaleSlotISO("");
               setSlotISO("");
+              setSubmitError(null); // Clear error when selecting new date
             }}
             slots={slotsForSelectedDay}
             slotISO={slotISO}
@@ -251,6 +256,7 @@ export default function BookingWizard() {
               setSlotUnavailable(false);
               setStaleSlotISO("");
               setSlotISO(iso);
+              setSubmitError(null); // Clear error when selecting new slot
             }}
             branchId={branchId}
             isLoadingAvailability={isLoadingAvailability}
@@ -267,6 +273,7 @@ export default function BookingWizard() {
             setEmail={setEmail}
             reason={reason}
             setReason={setReason}
+            setEmailValid={setEmailValid}
           />
         )}
 
