@@ -94,7 +94,7 @@ export default function StepDetails({
       </div>
 
       <div className="rounded-2xl border border-slate-200 bg-slate-50 p-5 text-sm text-slate-700">
-        This prototype does not send emails yet, but the confirmation step will display your appointment details.
+        A confirmation step will display your appointment details once your booking is complete.
       </div>
     </div>
   );

@@ -204,9 +204,6 @@ export default function BookingWizard() {
     <div className="mx-auto max-w-3xl space-y-6">
       <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
         <h1 className="text-2xl font-bold">Book an Appointment</h1>
-        <p className="mt-2 text-slate-600">
-          Topic → branch → date/time → details → confirmation.
-        </p>
 
         <div className="mt-6">
           <ProgressBar step={step} steps={STEPS} />

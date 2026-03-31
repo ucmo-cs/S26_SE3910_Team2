@@ -1,13 +1,47 @@
 @import "tailwindcss";
 
 :root {
+  --white: #ffffff;
+  --off-black: #404040;
   --commerce-green: #006747;
   --commerce-gray: #c7c0b9;
   --commerce-lime: #78be20;
+  --commerce-blue: #00b5e2;
+  --dark-gray: #615c59;
+  --checked-green: #4fa800;
 }
 
 body {
-  font-family: "Open Sans", Arial, sans-serif;
+  font-family: var(--font-open-sans), Arial, sans-serif;
+}
+
+.white-text {
+  color: var(--white);
+}
+
+.off-black-text {
+  color: var(--off-black);
+  text-align: center;
+}
+
+.commerce-green-text {
+  color: var(--commerce-green);
+}
+
+.lime-green-text {
+  color: var(--commerce-lime);
+}
+
+.blue-text {
+  color: var(--commerce-blue);
+}
+
+.dark-gray-text {
+  color: var(--dark-gray);
+}
+
+.checked {
+  color: var(--checked-green);
 }
 
 @keyframes fadeUp {

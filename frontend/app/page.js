@@ -3,27 +3,18 @@ import Image from "next/image";
 
 export default function Home() {
   return (
-    <main className="min-h-screen bg-gradient-to-b from-white via-white to-slate-50">
-      {/* Top accent bar */}
-      <div className="h-2 w-full bg-[#78be20]" />
-
+    <main className="min-h-[calc(100vh-74px)]">
       <div className="mx-auto max-w-6xl px-6 py-14">
         <div className="grid items-center gap-12 lg:grid-cols-2">
           {/* LEFT CONTENT */}
           <section className="space-y-6 fade-up">
-            <p className="inline-flex w-fit items-center gap-2 border border-slate-200 bg-white px-3 py-1 text-xs font-semibold uppercase tracking-widest text-[#006747]">
-              Commerce Bank Prototype
-              <span className="h-1.5 w-1.5 rounded-full bg-[#006747]" />
-              Front-end only
-            </p>
-
             <h1 className="text-4xl font-bold leading-tight tracking-tight text-slate-900 sm:text-5xl">
               Schedule your in-branch appointment in minutes.
             </h1>
 
             <p className="max-w-xl text-base leading-7 text-slate-600">
               Choose a topic, pick a branch that supports it, and reserve an available 30-minute
-              slot. Bookings become unavailable immediately to prevent double scheduling.
+              slot.
             </p>
 
             <div className="flex flex-wrap gap-4">
@@ -33,28 +24,6 @@ export default function Home() {
               >
                 Book an Appointment
               </Link>
-
-              <a
-                href="#how"
-                className="inline-flex items-center justify-center border-2 border-slate-300 bg-white px-6 py-3 text-sm font-semibold text-slate-900 transition-all duration-200 hover:-translate-y-0.5 hover:bg-slate-50 hover:shadow-md"
-              >
-                Learn More
-              </a>
-            </div>
-
-            <div className="flex items-center gap-5 text-sm text-slate-600">
-              <div className="flex items-center gap-2">
-                <span className="h-2 w-2 rounded-full bg-[#006747]" />
-                Topic-based branch filtering
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="h-2 w-2 rounded-full bg-[#006747]" />
-                30-minute time slots
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="h-2 w-2 rounded-full bg-[#006747]" />
-                Instant reservation behavior
-              </div>
             </div>
           </section>
 
@@ -76,9 +45,9 @@ export default function Home() {
               </div>
 
               <div className="border-t border-slate-200 p-4">
-                <p className="text-sm font-semibold text-slate-900">Prototype goals</p>
+                <p className="text-sm font-semibold text-slate-900">Booking goals</p>
                 <p className="mt-1 text-sm text-slate-600">
-                  Book topics, branches, and appointments through the connected Spring Boot APIs.
+                  Book an appointment with your local branch to get personalized assistance and support for your banking needs.
                 </p>
               </div>
             </div>
@@ -86,17 +55,17 @@ export default function Home() {
         </div>
 
         {/* HOW IT WORKS */}
-        <section id="how" className="mt-20 fade-up [animation-delay:200ms]">
+        <section id="how" className="mt-6 fade-up [animation-delay:200ms]">
           <div className="border-t border-slate-200" />
 
-          <div className="pt-12">
+          <div className="mt-6">
             <div className="flex items-end justify-between gap-6">
               <div>
                 <h2 className="text-2xl font-bold text-slate-900">
                   How it works
                 </h2>
                 <p className="mt-2 text-slate-600">
-                  A simple, guided flow that prevents double booking.
+                  A simple 3-step process to get you booked in no time.
                 </p>
               </div>
             </div>
@@ -107,15 +76,15 @@ export default function Home() {
             {[
               {
                 title: "1. Choose a Topic",
-                body: "Topics come from the database and drive branch availability.",
+                body: "Topics include account help, loan questions, and more.",
               },
               {
                 title: "2. Select a Branch",
-                body: "Branches filter based on which topics they support.",
+                body: "Select a branch that supports your chosen topic.",
               },
               {
                 title: "3. Reserve a Time",
-                body: "Available 30-minute slots update immediately after booking.",
+                body: "Choose an available 30-minute slot that works for you.",
               },
             ].map((card) => (
               <div
