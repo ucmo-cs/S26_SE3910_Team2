@@ -206,32 +206,8 @@ export default function ConfirmationPage() {
               <h3 className="text-base font-semibold text-slate-900">
                 What happens next?
               </h3>
-
-              <div className="mt-4 space-y-3 text-sm text-slate-600">
-                <div className="flex gap-3">
-                  <span className="mt-1 h-2 w-2 rounded-full bg-[#006747]" />
-                  <p>
-                    This time slot is now <span className="font-semibold">unavailable</span> for future bookings.
-                  </p>
-                </div>
-                <div className="flex gap-3">
-                  <span className="mt-1 h-2 w-2 rounded-full bg-[#006747]" />
-                  <p>
-                    Stretch goal: send a simple confirmation email with branch + date/time.
-                  </p>
-                </div>
-                <div className="flex gap-3">
-                  <span className="mt-1 h-2 w-2 rounded-full bg-[#006747]" />
-                  <p>
-                    Stretch goal: support different business hours by day of week.
-                  </p>
-                </div>
-              </div>
-
-              <div className="mt-6 h-px w-full bg-gradient-to-r from-transparent via-slate-300 to-transparent" />
-
-              <p className="mt-6 text-xs text-slate-500">
-                Your appointment details are being loaded from the backend.
+              <p className="mt-4 text-sm text-slate-600">
+                Your appointment is confirmed. You will receive a confirmation email shortly with all the details.
               </p>
             </div>
           </div>
