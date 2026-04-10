@@ -1,11 +1,23 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 
+import { clearSessionUser, getSessionUser, subscribeToSessionUser } from "../lib/session";
+
 export default function SiteNav() {
   const router = useRouter();
+  const [user, setUser] = useState(null);
+
+  useEffect(() => {
+    setUser(getSessionUser());
+
+    return subscribeToSessionUser((nextUser) => {
+      setUser(nextUser);
+    });
+  }, []);
 
   return (
     <header className="border-b border-slate-200 bg-white/95 backdrop-blur">
@@ -23,6 +35,15 @@ export default function SiteNav() {
         </Link>
 
         <nav className="flex items-center gap-3">
+          {user ? (
+            <Link
+              href="/dashboard"
+              className="inline-flex items-center justify-center rounded-sm border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition-all duration-200 hover:-translate-y-0.5 hover:border-slate-900 hover:text-black hover:shadow-md"
+            >
+              Dashboard
+            </Link>
+          ) : null}
+
           <Link
             href="/book"
             className="inline-flex items-center justify-center border border-[#006747] bg-[#006747] px-4 py-2 text-sm font-semibold text-white transition-all duration-200 hover:-translate-y-0.5 hover:border-black hover:bg-black hover:shadow-lg"
@@ -30,13 +51,27 @@ export default function SiteNav() {
             Book an Appointment
           </Link>
 
-          <button
-            type="button"
-            onClick={() => router.push("/login")}
-            className="inline-flex items-center justify-center rounded-sm border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition-all duration-200 hover:-translate-y-0.5 hover:border-slate-900 hover:text-black hover:shadow-md"
-          >
-            Login
-          </button>
+          {user ? (
+            <button
+              type="button"
+              onClick={() => {
+                clearSessionUser();
+                setUser(null);
+                router.push("/login");
+              }}
+              className="inline-flex items-center justify-center rounded-sm border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition-all duration-200 hover:-translate-y-0.5 hover:border-slate-900 hover:text-black hover:shadow-md"
+            >
+              Log Out
+            </button>
+          ) : (
+            <button
+              type="button"
+              onClick={() => router.push("/login")}
+              className="inline-flex items-center justify-center rounded-sm border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition-all duration-200 hover:-translate-y-0.5 hover:border-slate-900 hover:text-black hover:shadow-md"
+            >
+              Login
+            </button>
+          )}
         </nav>
       </div>
     </header>
