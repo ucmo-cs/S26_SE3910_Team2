@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 
 import { saveSessionUser } from "../../lib/session";
@@ -28,6 +28,23 @@ export default function LoginPage() {
 
   const inputClass =
     "mt-1 w-full rounded-2xl border border-slate-200 bg-white p-3 outline-none transition focus:border-[#006747] focus:ring-4 focus:ring-[#006747]/15";
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const fullName = params.get("fullName");
+    const email = params.get("email");
+
+    if (!fullName && !email) {
+      return;
+    }
+
+    setMode("signup");
+    setSignupForm((current) => ({
+      ...current,
+      fullName: fullName || current.fullName,
+      email: email || current.email,
+    }));
+  }, []);
 
   async function handleSubmit(event) {
     event.preventDefault();
