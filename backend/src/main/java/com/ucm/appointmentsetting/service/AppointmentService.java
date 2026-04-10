@@ -23,6 +23,7 @@ import java.time.LocalTime;
 import java.util.List;
 
 import static org.springframework.http.HttpStatus.NOT_FOUND;
+import static org.springframework.http.HttpStatus.FORBIDDEN;
 
 @Service
 public class AppointmentService {
@@ -89,12 +90,29 @@ public class AppointmentService {
     }
 
     public List<AppointmentSummaryResponse> getAppointmentsForUser(Long userId) {
-        if (!userRepository.existsById(userId)) {
-            throw new ResponseStatusException(NOT_FOUND, "User not found.");
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new ResponseStatusException(NOT_FOUND, "User not found."));
+
+        return appointmentRepository.findByUserIdOrderByAppointmentDateAscAppointmentTimeAsc(user.getId())
+                .stream()
+                .map(AppointmentSummaryResponse::new)
+                .toList();
+    }
+
+    public List<AppointmentSummaryResponse> getAllAppointmentsForBanker(Long userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new ResponseStatusException(NOT_FOUND, "User not found."));
+
+        if (!"BANKER".equalsIgnoreCase(user.getRole())) {
+            throw new ResponseStatusException(FORBIDDEN, "Banker access is required.");
         }
 
-        return appointmentRepository.findByUserIdOrderByAppointmentDateAscAppointmentTimeAsc(userId)
-                .stream()
+        return appointmentRepository.findAll().stream()
+                .sorted((left, right) -> {
+                    LocalDateTime leftDateTime = LocalDateTime.of(left.getAppointmentDate(), left.getAppointmentTime());
+                    LocalDateTime rightDateTime = LocalDateTime.of(right.getAppointmentDate(), right.getAppointmentTime());
+                    return leftDateTime.compareTo(rightDateTime);
+                })
                 .map(AppointmentSummaryResponse::new)
                 .toList();
     }

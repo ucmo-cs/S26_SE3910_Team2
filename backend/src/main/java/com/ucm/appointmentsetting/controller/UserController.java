@@ -39,8 +39,18 @@ public class UserController {
         return new UserResponse(userService.authenticate(request));
     }
 
+    @PostMapping("/banker-login")
+    public UserResponse bankerLogin(@RequestBody UserLoginRequest request) {
+        return new UserResponse(userService.authenticateBanker(request));
+    }
+
     @GetMapping("/{userId}/appointments")
     public List<AppointmentSummaryResponse> getAppointments(@PathVariable Long userId) {
         return appointmentService.getAppointmentsForUser(userId);
+    }
+
+    @GetMapping("/{userId}/banker-appointments")
+    public List<AppointmentSummaryResponse> getBankerAppointments(@PathVariable Long userId) {
+        return appointmentService.getAllAppointmentsForBanker(userId);
     }
 }

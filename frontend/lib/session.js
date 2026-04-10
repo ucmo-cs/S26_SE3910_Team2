@@ -1,4 +1,5 @@
 const SESSION_USER_KEY = "commerce-bank-user";
+const SESSION_BANKER_KEY = "commerce-bank-banker";
 const SESSION_USER_EVENT = "commerce-bank-user-change";
 
 export function getSessionUser() {
@@ -34,6 +35,42 @@ export function clearSessionUser() {
   }
 
   window.localStorage.removeItem(SESSION_USER_KEY);
+  window.dispatchEvent(new Event(SESSION_USER_EVENT));
+}
+
+export function getSessionBanker() {
+  if (typeof window === "undefined") {
+    return null;
+  }
+
+  const rawValue = window.localStorage.getItem(SESSION_BANKER_KEY);
+  if (!rawValue) {
+    return null;
+  }
+
+  try {
+    return JSON.parse(rawValue);
+  } catch {
+    window.localStorage.removeItem(SESSION_BANKER_KEY);
+    return null;
+  }
+}
+
+export function saveSessionBanker(user) {
+  if (typeof window === "undefined") {
+    return;
+  }
+
+  window.localStorage.setItem(SESSION_BANKER_KEY, JSON.stringify(user));
+  window.dispatchEvent(new Event(SESSION_USER_EVENT));
+}
+
+export function clearSessionBanker() {
+  if (typeof window === "undefined") {
+    return;
+  }
+
+  window.localStorage.removeItem(SESSION_BANKER_KEY);
   window.dispatchEvent(new Event(SESSION_USER_EVENT));
 }
 

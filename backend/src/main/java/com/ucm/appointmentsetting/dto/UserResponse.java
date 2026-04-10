@@ -9,6 +9,7 @@ public class UserResponse {
     private String phoneNumber;
     private String email;
     private String username;
+    private String role;
 
     public UserResponse() {
     }
@@ -19,6 +20,7 @@ public class UserResponse {
         this.phoneNumber = user.getPhoneNumber();
         this.email = user.getEmail();
         this.username = user.getUsername();
+        this.role = user.getRole();
     }
 
     public Long getId() {
@@ -39,5 +41,9 @@ public class UserResponse {
 
     public String getUsername() {
         return username;
+    }
+
+    public String getRole() {
+        return role;
     }
 }

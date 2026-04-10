@@ -1,30 +1,33 @@
 package com.ucm.appointmentsetting.service;
 
+import java.util.List;
+
+import static org.springframework.http.HttpStatus.BAD_REQUEST;
+import static org.springframework.http.HttpStatus.FORBIDDEN;
+import static org.springframework.http.HttpStatus.UNAUTHORIZED;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
+
 import com.ucm.appointmentsetting.dto.UserLoginRequest;
 import com.ucm.appointmentsetting.dto.UserSignupRequest;
 import com.ucm.appointmentsetting.entity.Appointment;
 import com.ucm.appointmentsetting.entity.User;
 import com.ucm.appointmentsetting.repository.AppointmentRepository;
 import com.ucm.appointmentsetting.repository.UserRepository;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
-import org.springframework.stereotype.Service;
-import org.springframework.web.server.ResponseStatusException;
-
-import java.util.List;
-
-import static org.springframework.http.HttpStatus.BAD_REQUEST;
-import static org.springframework.http.HttpStatus.UNAUTHORIZED;
 
 @Service
 public class UserService {
 
     private final UserRepository userRepository;
     private final AppointmentRepository appointmentRepository;
-    private final BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
+    private final PasswordEncoder passwordEncoder;
 
     public UserService(UserRepository userRepository, AppointmentRepository appointmentRepository) {
         this.userRepository = userRepository;
         this.appointmentRepository = appointmentRepository;
+        this.passwordEncoder = new BCryptPasswordEncoder();
     }
 
     public User register(UserSignupRequest request) {
@@ -56,6 +59,7 @@ public class UserService {
         user.setEmail(email);
         user.setUsername(username);
         user.setPasswordHash(passwordEncoder.encode(password));
+        user.setRole("CUSTOMER");
 
         User savedUser = userRepository.save(user);
         attachExistingAppointments(savedUser);
@@ -74,6 +78,14 @@ public class UserService {
         }
 
         attachExistingAppointments(user);
+        return user;
+    }
+
+    public User authenticateBanker(UserLoginRequest request) {
+        User user = authenticate(request);
+        if (!"BANKER".equalsIgnoreCase(user.getRole())) {
+            throw new ResponseStatusException(FORBIDDEN, "Banker access is required.");
+        }
         return user;
     }
 

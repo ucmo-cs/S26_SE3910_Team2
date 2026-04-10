@@ -51,6 +51,10 @@ public class User {
     @Column(nullable = false, length = 255)
     private String passwordHash;
 
+    @Size(max = 20)
+    @Column(length = 20)
+    private String role;
+
     public User() {
     }
 
@@ -100,5 +104,13 @@ public class User {
 
     public void setPasswordHash(String passwordHash) {
         this.passwordHash = passwordHash;
+    }
+
+    public String getRole() {
+        return role;
+    }
+
+    public void setRole(String role) {
+        this.role = role;
     }
 }
