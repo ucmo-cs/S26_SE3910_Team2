@@ -10,6 +10,13 @@ import java.util.List;
 public interface AppointmentRepository extends JpaRepository<Appointment, Long> {
     boolean existsByBranchIdAndAppointmentDateAndAppointmentTime(Long branchId, LocalDate appointmentDate, LocalTime appointmentTime);
 
+    boolean existsByBranchIdAndAppointmentDateAndAppointmentTimeAndIdNot(
+            Long branchId,
+            LocalDate appointmentDate,
+            LocalTime appointmentTime,
+            Long id
+    );
+
     List<Appointment> findByUserIdOrderByAppointmentDateAscAppointmentTimeAsc(Long userId);
 
     List<Appointment> findByEmailIgnoreCaseAndUserIsNull(String email);

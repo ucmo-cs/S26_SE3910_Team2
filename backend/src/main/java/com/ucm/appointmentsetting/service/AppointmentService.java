@@ -2,6 +2,7 @@ package com.ucm.appointmentsetting.service;
 
 import com.ucm.appointmentsetting.dto.AppointmentRequest;
 import com.ucm.appointmentsetting.dto.AppointmentSummaryResponse;
+import com.ucm.appointmentsetting.dto.AppointmentUpdateRequest;
 import com.ucm.appointmentsetting.entity.Appointment;
 import com.ucm.appointmentsetting.entity.Branch;
 import com.ucm.appointmentsetting.entity.Topic;
@@ -22,6 +23,8 @@ import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.List;
 
+import static org.springframework.http.HttpStatus.BAD_REQUEST;
+import static org.springframework.http.HttpStatus.FORBIDDEN;
 import static org.springframework.http.HttpStatus.NOT_FOUND;
 import static org.springframework.http.HttpStatus.FORBIDDEN;
 
@@ -43,18 +46,9 @@ public class AppointmentService {
     }
 
     public Appointment bookAppointment(AppointmentRequest request) {
-        LocalDateTime dateTime = LocalDateTime.parse(request.getStartISO());
-        if (dateTime.isBefore(LocalDateTime.now())) {
-            throw new PastAppointmentException("Cannot book an appointment in the past.");
-        }
-
+        LocalDateTime dateTime = parseAndValidateAppointmentTime(request.getStartISO());
         LocalDate date = dateTime.toLocalDate();
         LocalTime time = dateTime.toLocalTime();
-        LocalTime open = LocalTime.of(9, 0);
-        LocalTime last = LocalTime.of(16, 30);
-        if (time.isBefore(open) || time.isAfter(last)) {
-            throw new OutsideBusinessHoursException("Appointment time must be between 09:00 and 16:30.");
-        }
 
         boolean conflictExists = appointmentRepository.existsByBranchIdAndAppointmentDateAndAppointmentTime(
                 request.getBranchId(),
@@ -89,6 +83,52 @@ public class AppointmentService {
         return appointmentRepository.save(appointment);
     }
 
+    public Appointment updateAppointment(Long appointmentId, AppointmentUpdateRequest request) {
+        if (request.getActorUserId() == null) {
+            throw new ResponseStatusException(BAD_REQUEST, "An actor user is required.");
+        }
+
+        Appointment appointment = appointmentRepository.findById(appointmentId)
+                .orElseThrow(() -> new ResponseStatusException(NOT_FOUND, "Appointment not found."));
+        User actor = userRepository.findById(request.getActorUserId())
+                .orElseThrow(() -> new ResponseStatusException(NOT_FOUND, "User not found."));
+
+        validateAccess(actor, appointment);
+
+        LocalDateTime dateTime = parseAndValidateAppointmentTime(request.getStartISO());
+        LocalDate date = dateTime.toLocalDate();
+        LocalTime time = dateTime.toLocalTime();
+
+        boolean conflictExists = appointmentRepository.existsByBranchIdAndAppointmentDateAndAppointmentTimeAndIdNot(
+                appointment.getBranch().getId(),
+                date,
+                time,
+                appointment.getId()
+        );
+        if (conflictExists) {
+            throw new SlotUnavailableException("Slot unavailable");
+        }
+
+        appointment.setAppointmentDate(date);
+        appointment.setAppointmentTime(time);
+
+        return appointmentRepository.save(appointment);
+    }
+
+    public void deleteAppointment(Long appointmentId, Long actorUserId) {
+        if (actorUserId == null) {
+            throw new ResponseStatusException(BAD_REQUEST, "An actor user is required.");
+        }
+
+        Appointment appointment = appointmentRepository.findById(appointmentId)
+                .orElseThrow(() -> new ResponseStatusException(NOT_FOUND, "Appointment not found."));
+        User actor = userRepository.findById(actorUserId)
+                .orElseThrow(() -> new ResponseStatusException(NOT_FOUND, "User not found."));
+
+        validateAccess(actor, appointment);
+        appointmentRepository.delete(appointment);
+    }
+
     public List<AppointmentSummaryResponse> getAppointmentsForUser(Long userId) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new ResponseStatusException(NOT_FOUND, "User not found."));
@@ -115,5 +155,33 @@ public class AppointmentService {
                 })
                 .map(AppointmentSummaryResponse::new)
                 .toList();
+    }
+
+    private LocalDateTime parseAndValidateAppointmentTime(String startISO) {
+        LocalDateTime dateTime = LocalDateTime.parse(startISO);
+        if (dateTime.isBefore(LocalDateTime.now())) {
+            throw new PastAppointmentException("Cannot book an appointment in the past.");
+        }
+
+        LocalTime time = dateTime.toLocalTime();
+        LocalTime open = LocalTime.of(9, 0);
+        LocalTime last = LocalTime.of(16, 30);
+        if (time.isBefore(open) || time.isAfter(last)) {
+            throw new OutsideBusinessHoursException("Appointment time must be between 09:00 and 16:30.");
+        }
+
+        return dateTime;
+    }
+
+    private void validateAccess(User actor, Appointment appointment) {
+        if ("BANKER".equalsIgnoreCase(actor.getRole())) {
+            return;
+        }
+
+        if (appointment.getUser() != null && appointment.getUser().getId().equals(actor.getId())) {
+            return;
+        }
+
+        throw new ResponseStatusException(FORBIDDEN, "You do not have access to modify this appointment.");
     }
 }
