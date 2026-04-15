@@ -96,8 +96,8 @@ export default function LoginPage() {
 
   return (
     <main className="min-h-[calc(100vh-74px)] px-6 py-12">
-      <div className="mx-auto grid max-w-5xl gap-8 lg:grid-cols-[1.1fr_0.9fr]">
-        <section className="rounded-[2rem] border border-slate-200 bg-[linear-gradient(145deg,#0b1f19,#006747_60%,#78be20)] p-10 text-white shadow-xl">
+      <div className="mx-auto grid max-w-5xl items-start gap-8 lg:grid-cols-[1.1fr_0.9fr]">
+        <section className="self-start rounded-[2rem] border border-slate-200 bg-[linear-gradient(145deg,#0b1f19,#006747_60%,#78be20)] p-10 text-white shadow-xl">
           <p className="text-xs font-semibold uppercase tracking-[0.35em] text-white/75">
             Online Banking Profile
           </p>
@@ -111,7 +111,7 @@ export default function LoginPage() {
 
           <div className="mt-8 grid gap-4 sm:grid-cols-3">
             {[
-              "Save your profile in the database",
+              "View your personalized appointment dashboard",
               "Review scheduled appointments instantly",
               "Track previous branch visits",
             ].map((item) => (
@@ -122,7 +122,7 @@ export default function LoginPage() {
           </div>
         </section>
 
-        <section className="rounded-[2rem] border border-slate-200 bg-white p-8 shadow-sm">
+        <section className="self-start rounded-[2rem] border border-slate-200 bg-white p-8 shadow-sm">
           <div className="inline-flex rounded-full border border-slate-200 bg-slate-100 p-1">
             <button
               type="button"

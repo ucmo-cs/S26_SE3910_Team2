@@ -16,14 +16,12 @@ import {
 export default function SiteNav() {
   const router = useRouter();
   const pathname = usePathname();
-  const [user, setUser] = useState(null);
-  const [banker, setBanker] = useState(null);
+  const [user, setUser] = useState(() => getSessionUser());
+  const [banker, setBanker] = useState(() => getSessionBanker());
   const isBankerPage = pathname?.startsWith("/banker");
+  const isUserDashboardPage = pathname === "/dashboard";
 
   useEffect(() => {
-    setUser(getSessionUser());
-    setBanker(getSessionBanker());
-
     return subscribeToSessionUser(() => {
       setUser(getSessionUser());
       setBanker(getSessionBanker());
@@ -62,7 +60,7 @@ export default function SiteNav() {
             ) : null
           ) : (
             <>
-              {user ? (
+              {user && !isUserDashboardPage ? (
                 <Link
                   href="/dashboard"
                   className="inline-flex items-center justify-center rounded-sm border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition-all duration-200 hover:-translate-y-0.5 hover:border-slate-900 hover:text-black hover:shadow-md"
