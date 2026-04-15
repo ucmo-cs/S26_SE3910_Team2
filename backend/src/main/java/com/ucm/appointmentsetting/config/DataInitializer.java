@@ -2,14 +2,17 @@ package com.ucm.appointmentsetting.config;
 
 import com.ucm.appointmentsetting.entity.Branch;
 import com.ucm.appointmentsetting.entity.Topic;
+import com.ucm.appointmentsetting.entity.User;
 import com.ucm.appointmentsetting.repository.BranchRepository;
 import com.ucm.appointmentsetting.repository.TopicRepository;
+import com.ucm.appointmentsetting.repository.UserRepository;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.Order;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 
 import java.util.HashSet;
 import java.util.List;
@@ -19,6 +22,8 @@ import java.util.stream.Collectors;
 
 @Configuration
 public class DataInitializer {
+
+    private final BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
 
     @PersistenceContext
     private EntityManager entityManager;
@@ -140,6 +145,42 @@ public class DataInitializer {
                 north.setTopics(new HashSet<>(List.of(newAccounts, fraudSupport)));
                 branchRepository.save(north);
             }
+        };
+    }
+
+    @Bean
+    @Order(4)
+    CommandLineRunner seedBankerUser(UserRepository userRepository) {
+        return args -> {
+            List<User> usersNeedingRoles = userRepository.findAll().stream()
+                    .filter(user -> user.getRole() == null || user.getRole().isBlank())
+                    .peek(user -> user.setRole("CUSTOMER"))
+                    .toList();
+
+            if (!usersNeedingRoles.isEmpty()) {
+                userRepository.saveAll(usersNeedingRoles);
+            }
+
+            if (userRepository.existsByUsernameIgnoreCase("BestBanker")) {
+                User banker = userRepository.findByUsernameIgnoreCase("BestBanker").orElseThrow();
+                banker.setFullName("Best Banker");
+                banker.setPhoneNumber("8005550100");
+                banker.setEmail("bestbanker@commercebank.local");
+                banker.setPasswordHash(passwordEncoder.encode("TestPassword1!"));
+                banker.setRole("BANKER");
+                userRepository.save(banker);
+                return;
+            }
+
+            User banker = new User();
+            banker.setFullName("Best Banker");
+            banker.setPhoneNumber("8005550100");
+            banker.setEmail("bestbanker@commercebank.local");
+            banker.setUsername("BestBanker");
+            banker.setPasswordHash(passwordEncoder.encode("TestPassword1!"));
+            banker.setRole("BANKER");
+
+            userRepository.save(banker);
         };
     }
 }

@@ -207,8 +207,20 @@ export default function ConfirmationPage() {
                 What happens next?
               </h3>
               <p className="mt-4 text-sm text-slate-600">
-                Your appointment is confirmed. You will receive a confirmation email shortly with all the details.
+                Create an account today to view, reshedule, or cancel appointments!
               </p>
+              <Link
+                href={{
+                  pathname: "/login",
+                  query: {
+                    fullName: booking.fullName || "",
+                    email: booking.email || "",
+                  },
+                }}
+                className="mt-6 inline-flex items-center justify-center border-2 border-[#006747] bg-[#006747] px-5 py-3 text-sm font-semibold text-white transition-all duration-200 hover:-translate-y-0.5 hover:border-black hover:bg-black hover:shadow-lg"
+              >
+                Create Account
+              </Link>
             </div>
           </div>
         )}

@@ -35,6 +35,7 @@ export default function Home() {
                   src="/homepageImg.jpg"
                   alt="Bank customer appointment"
                   fill
+                  sizes="(min-width: 1024px) 50vw, 100vw"
                   priority
                   className="object-cover transition-transform duration-500 group-hover:scale-[1.02]"
                 />

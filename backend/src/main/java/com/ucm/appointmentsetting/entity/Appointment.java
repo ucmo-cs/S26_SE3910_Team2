@@ -1,5 +1,6 @@
 package com.ucm.appointmentsetting.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -62,6 +63,11 @@ public class Appointment {
     @ManyToOne
     @JoinColumn(name = "branch_id", nullable = false)
     private Branch branch;
+
+    @ManyToOne
+    @JoinColumn(name = "user_id")
+    @JsonIgnore
+    private User user;
 
     public Appointment() {
     }
@@ -128,5 +134,13 @@ public class Appointment {
 
     public void setBranch(Branch branch) {
         this.branch = branch;
+    }
+
+    public User getUser() {
+        return user;
+    }
+
+    public void setUser(User user) {
+        this.user = user;
     }
 }

@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 
 import { nextNDays } from "../../lib/slots";
+import { getSessionUser } from "../../lib/session";
 
 import StepTopic from "./StepTopic.client";
 import StepBranch from "./StepBranch.client";
@@ -32,6 +33,7 @@ export default function BookingWizard() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [reason, setReason] = useState("");
+  const [user, setUser] = useState(null);
   const [emailValid, setEmailValid] = useState(false);
   const [slotsForSelectedDay, setSlotsForSelectedDay] = useState([]);
   const [isLoadingAvailability, setIsLoadingAvailability] = useState(false);
@@ -45,6 +47,18 @@ export default function BookingWizard() {
   useEffect(() => {
     latestSlotISO.current = slotISO;
   }, [slotISO]);
+
+  useEffect(() => {
+    const sessionUser = getSessionUser();
+    if (!sessionUser) {
+      return;
+    }
+
+    setUser(sessionUser);
+    setName((current) => current || sessionUser.fullName || "");
+    setEmail((current) => current || sessionUser.email || "");
+    setEmailValid(Boolean(sessionUser.email));
+  }, []);
 
   useEffect(() => {
     async function loadTopics() {
@@ -167,6 +181,7 @@ export default function BookingWizard() {
       email,
       topicId: Number(topicId),
       branchId: Number(branchId),
+      userId: user?.id ?? null,
       startISO: slotISO,
       reason,
     };
@@ -193,7 +208,7 @@ export default function BookingWizard() {
       }
 
       const savedAppointment = await response.json();
-      router.push(`/confirmation/${savedAppointment.id}`);
+      router.push(user?.id ? "/dashboard" : `/confirmation/${savedAppointment.id}`);
     } catch {
       setSubmitError("This time slot is no longer available");
       return;
@@ -204,6 +219,11 @@ export default function BookingWizard() {
     <div className="mx-auto max-w-3xl space-y-6">
       <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
         <h1 className="text-2xl font-bold">Book an Appointment</h1>
+        {user ? (
+          <p className="mt-2 text-sm text-slate-600">
+            Booking as {user.fullName}. This appointment will appear on your dashboard.
+          </p>
+        ) : null}
 
         <div className="mt-6">
           <ProgressBar step={step} steps={STEPS} />
