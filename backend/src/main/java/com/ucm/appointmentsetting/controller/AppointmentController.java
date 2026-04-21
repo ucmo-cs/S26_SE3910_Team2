@@ -1,11 +1,14 @@
 package com.ucm.appointmentsetting.controller;
 
+import com.ucm.appointmentsetting.dto.AppointmentBookingResponse;
 import com.ucm.appointmentsetting.dto.AppointmentRequest;
 import com.ucm.appointmentsetting.dto.AppointmentSummaryResponse;
 import com.ucm.appointmentsetting.dto.AppointmentUpdateRequest;
+import com.ucm.appointmentsetting.dto.ResendConfirmationRequest;
 import com.ucm.appointmentsetting.entity.Appointment;
 import com.ucm.appointmentsetting.repository.AppointmentRepository;
 import com.ucm.appointmentsetting.service.AppointmentService;
+import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -37,12 +40,16 @@ public class AppointmentController {
     }
 
     @PostMapping
-    public ResponseEntity<Appointment> createAppointment(@RequestBody AppointmentRequest request) {
-        Appointment appointment = appointmentService.bookAppointment(request);
-        if (appointment == null) {
-            return ResponseEntity.status(409).build();
-        }
-        return ResponseEntity.ok(appointment);
+    public ResponseEntity<AppointmentBookingResponse> createAppointment(@RequestBody AppointmentRequest request) {
+        return ResponseEntity.ok(appointmentService.bookAppointment(request));
+    }
+
+    @PostMapping("/{id}/resend-confirmation")
+    public ResponseEntity<AppointmentBookingResponse> resendConfirmation(
+            @PathVariable Long id,
+            @Valid @RequestBody ResendConfirmationRequest request
+    ) {
+        return ResponseEntity.ok(appointmentService.resendConfirmationEmail(id, request.getEmail()));
     }
 
     @PutMapping("/{id}")
