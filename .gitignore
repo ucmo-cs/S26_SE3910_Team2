@@ -2,6 +2,7 @@
 # Gradle
 .gradle/
 build/
+backend/bin/
 
 # Mac
 .DS_Store
@@ -14,4 +15,4 @@ build/
 *.log
 
 # Ignore application.properties
-src/main/resources/application.properties
+backend/src/main/resources/application.properties

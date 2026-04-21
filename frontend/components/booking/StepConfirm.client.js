@@ -71,6 +71,7 @@ export default function StepConfirm({
 
       <div className="rounded-2xl border border-slate-200 bg-white p-4 text-sm text-slate-600">
         When you click <span className="font-semibold">Confirm Appointment</span>, this time slot will become unavailable for other users.
+        <span className="mt-2 block">A confirmation email will be sent after booking.</span>
       </div>
     </div>
   );
