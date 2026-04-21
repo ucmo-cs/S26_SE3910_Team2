@@ -212,9 +212,9 @@ export default function ConfirmationPage() {
             </div>
           </div>
         ) : (
-          <div className="mt-8 grid gap-6 lg:grid-cols-3">
+          <div className={`mt-8 grid gap-6 ${user ? "justify-items-center" : "lg:grid-cols-3"}`}>
             {/* Details card */}
-            <div className="fade-up lg:col-span-2 rounded-2xl border border-slate-200 bg-white p-8 shadow-sm">
+            <div className={`fade-up rounded-2xl border border-slate-200 bg-white p-8 shadow-sm ${user ? "w-full max-w-3xl" : "lg:col-span-2"}`}>
               <div className="flex items-center justify-between gap-4">
                 <h2 className="text-lg font-semibold text-slate-900">
                   Appointment Details
@@ -357,26 +357,28 @@ export default function ConfirmationPage() {
             </div>
 
             {/* Sidebar card */}
-            <div className="fade-up [animation-delay:120ms] rounded-2xl border border-slate-200 bg-white p-8 shadow-sm">
-              <h3 className="text-base font-semibold text-slate-900">
-                What happens next?
-              </h3>
-              <p className="mt-4 text-sm text-slate-600">
-                Create an account today to view, reshedule, or cancel appointments!
-              </p>
-              <Link
-                href={{
-                  pathname: "/login",
-                  query: {
-                    fullName: booking.fullName || "",
-                    email: booking.email || "",
-                  },
-                }}
-                className="mt-6 inline-flex items-center justify-center border-2 border-[#006747] bg-[#006747] px-5 py-3 text-sm font-semibold text-white transition-all duration-200 hover:-translate-y-0.5 hover:border-black hover:bg-black hover:shadow-lg"
-              >
-                Create Account
-              </Link>
-            </div>
+            {!user ? (
+              <div className="fade-up [animation-delay:120ms] rounded-2xl border border-slate-200 bg-white p-8 shadow-sm">
+                <h3 className="text-base font-semibold text-slate-900">
+                  What happens next?
+                </h3>
+                <p className="mt-4 text-sm text-slate-600">
+                  Create an account today to view, reshedule, or cancel appointments!
+                </p>
+                <Link
+                  href={{
+                    pathname: "/login",
+                    query: {
+                      fullName: booking.fullName || "",
+                      email: booking.email || "",
+                    },
+                  }}
+                  className="mt-6 inline-flex items-center justify-center border-2 border-[#006747] bg-[#006747] px-5 py-3 text-sm font-semibold text-white transition-all duration-200 hover:-translate-y-0.5 hover:border-black hover:bg-black hover:shadow-lg"
+                >
+                  Create Account
+                </Link>
+              </div>
+            ) : null}
           </div>
         )}
       </div>
