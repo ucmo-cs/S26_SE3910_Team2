@@ -14,13 +14,44 @@ export default function StepDateTime({
   slotUnavailable,
   staleSlotISO,
 }) {
-  const allSlots = dateISO
-    ? Array.from({ length: 16 }, (_, index) => {
-        const hour = String(9 + Math.floor(index / 2)).padStart(2, "0");
-        const minute = index % 2 === 0 ? "00" : "30";
-        return `${dateISO.slice(0, 10)}T${hour}:${minute}:00`;
-      })
-    : [];
+  const now = new Date();
+
+  function getLocalDateKey(value) {
+    const date = new Date(value);
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const day = String(date.getDate()).padStart(2, "0");
+    return `${year}-${month}-${day}`;
+  }
+
+  function buildAllSlotsForDate(value) {
+    const dayKey = getLocalDateKey(value);
+
+    return Array.from({ length: 16 }, (_, index) => {
+      const hour = String(9 + Math.floor(index / 2)).padStart(2, "0");
+      const minute = index % 2 === 0 ? "00" : "30";
+      return `${dayKey}T${hour}:${minute}:00`;
+    });
+  }
+
+  const todayKey = getLocalDateKey(now);
+
+  const allSlots = dateISO ? buildAllSlotsForDate(dateISO) : [];
+
+  // KEEP: hide past times for today
+  const visibleSlots =
+    dateISO && getLocalDateKey(dateISO) === todayKey
+      ? allSlots.filter((iso) => new Date(iso) > now)
+      : allSlots;
+
+  const visibleDays = days.filter((d) => {
+    const dayKey = getLocalDateKey(d);
+
+    if (dayKey !== todayKey) return true;
+
+    const todaysSlots = buildAllSlotsForDate(d);
+    return todaysSlots.some((iso) => new Date(iso) > now);
+  });
 
   function handleSelectSlot(iso) {
     if (!slots.includes(iso)) return;
@@ -46,7 +77,7 @@ export default function StepDateTime({
           <div>
             <p className="text-sm font-semibold text-slate-700">Choose a date</p>
             <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-              {days.map((d) => {
+              {visibleDays.map((d) => {
                 const iso = new Date(d).toISOString();
                 const active = iso === dateISO;
 
@@ -101,7 +132,7 @@ export default function StepDateTime({
                 ) : null}
 
                 <div className="mt-3 flex flex-wrap gap-3">
-                  {allSlots.map((iso) => {
+                  {visibleSlots.map((iso) => {
                     const active = iso === slotISO;
                     const available = slots.includes(iso);
                     const stale = slotUnavailable && iso === staleSlotISO;

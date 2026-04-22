@@ -12,11 +12,6 @@ build/
 
 # Logs
 *.log
-# Ignore Gradle project-specific cache directory
-.gradle
 
-# Ignore Gradle build output directory
-build
-
-# Ignore Kotlin plugin data
-.kotlin
+# Ignore application.properties
+src/main/resources/application.properties

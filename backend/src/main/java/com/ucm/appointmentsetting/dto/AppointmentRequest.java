@@ -6,6 +6,7 @@ public class AppointmentRequest {
     private String email;
     private Long topicId;
     private Long branchId;
+    private Long userId;
     private String startISO;
     private String reason;
 
@@ -42,6 +43,14 @@ public class AppointmentRequest {
 
     public void setBranchId(Long branchId) {
         this.branchId = branchId;
+    }
+
+    public Long getUserId() {
+        return userId;
+    }
+
+    public void setUserId(Long userId) {
+        this.userId = userId;
     }
 
     public String getStartISO() {
