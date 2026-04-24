@@ -1,6 +1,7 @@
 package com.ucm.appointmentsetting.entity;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -9,11 +10,13 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.JoinTable;
 import jakarta.persistence.ManyToMany;
+import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 @Entity
@@ -57,6 +60,12 @@ public class Branch {
     )
     @JsonIgnore
     private Set<Topic> topics = new HashSet<>();
+
+    @OneToMany(mappedBy = "branch", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonIgnore
+    // Added to store flexible schedules per day of the week.
+    // Each branch can have different hours, e.g., weekends shorter.
+    private List<BranchSchedule> schedules;
 
     public Branch() {
     }
@@ -115,5 +124,14 @@ public class Branch {
 
     public void setTopics(Set<Topic> topics) {
         this.topics = topics;
+    }
+
+    // Getter and setter for the flexible schedules list.
+    public List<BranchSchedule> getSchedules() {
+        return schedules;
+    }
+
+    public void setSchedules(List<BranchSchedule> schedules) {
+        this.schedules = schedules;
     }
 }
