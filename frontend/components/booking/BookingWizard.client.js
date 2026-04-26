@@ -42,6 +42,7 @@ export default function BookingWizard() {
   const [staleSlotISO, setStaleSlotISO] = useState("");
   const [topics, setTopics] = useState([]);
   const [branches, setBranches] = useState([]);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const latestSlotISO = useRef("");
 
   useEffect(() => {
@@ -173,6 +174,9 @@ export default function BookingWizard() {
   }
 
   async function submit() {
+    if (isSubmitting) return;
+
+    setIsSubmitting(true);
     setSubmitError(null); // Clear error when retrying booking
     const id = makeId();
     const bookingPayload = {
@@ -199,18 +203,34 @@ export default function BookingWizard() {
         setSubmitError(
           "This time slot has already been booked. Please choose another time."
         );
+        setIsSubmitting(false);
         return;
       }
 
       if (!response.ok) {
         setSubmitError("This time slot is no longer available");
+        setIsSubmitting(false);
         return;
       }
 
       const savedAppointment = await response.json();
-      router.push(user?.id ? "/dashboard" : `/confirmation/${savedAppointment.id}`);
+      const appointmentId = savedAppointment.appointmentId ?? savedAppointment.id;
+      const emailSent = Boolean(savedAppointment.emailSent);
+      const confirmationEmail = savedAppointment.email || email;
+
+      if (typeof window !== "undefined") {
+        window.sessionStorage.setItem(
+          `appointment-confirmation-${appointmentId}`,
+          JSON.stringify({ emailSent, email: confirmationEmail })
+        );
+      }
+
+      router.push(
+        `/confirmation/${appointmentId}?emailSent=${emailSent}&email=${encodeURIComponent(confirmationEmail)}`
+      );
     } catch {
       setSubmitError("This time slot is no longer available");
+      setIsSubmitting(false);
       return;
     }
   }
@@ -314,6 +334,7 @@ export default function BookingWizard() {
         <div className="mt-8 flex items-center justify-between">
             <CommerceButton
               variant="secondary"
+              disabled={isSubmitting}
               onClick={() => {
                 if (step === 0) {
                   router.push("/");
@@ -330,8 +351,8 @@ export default function BookingWizard() {
               Next
             </CommerceButton>
           ) : (
-            <CommerceButton onClick={submit}>
-              Confirm Appointment
+            <CommerceButton onClick={submit} disabled={isSubmitting}>
+              {isSubmitting ? "Booking..." : "Confirm Appointment"}
             </CommerceButton>
           )}
         </div>

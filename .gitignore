@@ -2,6 +2,7 @@
 # Gradle
 .gradle/
 build/
+backend/bin/
 
 # Mac
 .DS_Store
@@ -16,3 +17,4 @@ build/
 # Ignore local application.properties files
 backend/src/main/resources/application.properties
 src/main/resources/application.properties
+

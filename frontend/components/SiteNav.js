@@ -16,16 +16,19 @@ import {
 export default function SiteNav() {
   const router = useRouter();
   const pathname = usePathname();
-  const [user, setUser] = useState(() => getSessionUser());
-  const [banker, setBanker] = useState(() => getSessionBanker());
+  const [user, setUser] = useState(null);
+  const [banker, setBanker] = useState(null);
   const isBankerPage = pathname?.startsWith("/banker");
   const isUserDashboardPage = pathname === "/dashboard";
 
   useEffect(() => {
-    return subscribeToSessionUser(() => {
+    function syncSession() {
       setUser(getSessionUser());
       setBanker(getSessionBanker());
-    });
+    }
+
+    syncSession();
+    return subscribeToSessionUser(syncSession);
   }, []);
 
   return (

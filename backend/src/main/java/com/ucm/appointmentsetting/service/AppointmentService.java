@@ -1,5 +1,6 @@
 package com.ucm.appointmentsetting.service;
 
+import com.ucm.appointmentsetting.dto.AppointmentBookingResponse;
 import com.ucm.appointmentsetting.dto.AppointmentRequest;
 import com.ucm.appointmentsetting.dto.AppointmentSummaryResponse;
 import com.ucm.appointmentsetting.dto.AppointmentUpdateRequest;
@@ -37,22 +38,31 @@ public class AppointmentService {
     private final TopicRepository topicRepository;
     private final BranchRepository branchRepository;
     private final UserRepository userRepository;
+    private final AppointmentEmailService appointmentEmailService;
 
     public AppointmentService(AppointmentRepository appointmentRepository,
                               TopicRepository topicRepository,
                               BranchRepository branchRepository,
-                              UserRepository userRepository) {
+                              UserRepository userRepository,
+                              AppointmentEmailService appointmentEmailService) {
         this.appointmentRepository = appointmentRepository;
         this.topicRepository = topicRepository;
         this.branchRepository = branchRepository;
         this.userRepository = userRepository;
+        this.appointmentEmailService = appointmentEmailService;
     }
 
-    public Appointment bookAppointment(AppointmentRequest request) {
-        Branch branch = branchRepository.findById(request.getBranchId()).orElse(null);
-        LocalDateTime dateTime = parseAndValidateAppointmentTime(request.getStartISO(), branch);
-        LocalDate date = dateTime.toLocalDate();
-        LocalTime time = dateTime.toLocalTime();
+public AppointmentBookingResponse bookAppointment(AppointmentRequest request) {
+    Branch branch = branchRepository
+        .findById(request.getBranchId())
+        .orElseThrow(() -> new RuntimeException("Branch not found"));
+
+    LocalDateTime dateTime =
+        parseAndValidateAppointmentTime(request.getStartISO(), branch);
+
+    LocalDate date = dateTime.toLocalDate();
+    LocalTime time = dateTime.toLocalTime();
+}
 
         boolean conflictExists = appointmentRepository.existsByBranchIdAndAppointmentDateAndAppointmentTime(
                 request.getBranchId(),
@@ -84,7 +94,19 @@ public class AppointmentService {
         appointment.setBranch(branch);
         appointment.setUser(user);
 
-        return appointmentRepository.save(appointment);
+        Appointment savedAppointment = appointmentRepository.save(appointment);
+        boolean emailSent = appointmentEmailService.sendConfirmationEmail(savedAppointment, savedAppointment.getEmail());
+
+        return new AppointmentBookingResponse(savedAppointment.getId(), savedAppointment.getEmail(), emailSent);
+    }
+
+    public AppointmentBookingResponse resendConfirmationEmail(Long appointmentId, String email) {
+        Appointment appointment = appointmentRepository.findById(appointmentId)
+                .orElseThrow(() -> new ResponseStatusException(NOT_FOUND, "Appointment not found."));
+
+        boolean emailSent = appointmentEmailService.sendConfirmationEmail(appointment, email);
+
+        return new AppointmentBookingResponse(appointment.getId(), email, emailSent);
     }
 
     public Appointment updateAppointment(Long appointmentId, AppointmentUpdateRequest request) {
