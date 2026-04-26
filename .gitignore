@@ -13,5 +13,6 @@ build/
 # Logs
 *.log
 
-# Ignore application.properties
+# Ignore local application.properties files
+backend/src/main/resources/application.properties
 src/main/resources/application.properties
