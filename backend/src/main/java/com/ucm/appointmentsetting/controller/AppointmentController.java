@@ -21,6 +21,14 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.time.LocalDate;
+import java.time.LocalTime;
+import java.util.List;
+
+import java.time.LocalDate;
+import java.time.LocalTime;
+import java.util.List;
+
 @RestController
 @CrossOrigin(origins = "http://localhost:3000")
 @RequestMapping("/api/appointments")
@@ -52,6 +60,11 @@ public class AppointmentController {
         return ResponseEntity.ok(appointmentService.resendConfirmationEmail(id, request.getEmail()));
     }
 
+    @GetMapping("/available-slots") 
+    public List<String> getAvailableSlots(@RequestParam Long branchId, @RequestParam String dateISO) { 
+        return appointmentService.getAvailableSlots(branchId, dateISO);
+     }
+     
     @PutMapping("/{id}")
     public ResponseEntity<AppointmentSummaryResponse> updateAppointment(
             @PathVariable Long id,

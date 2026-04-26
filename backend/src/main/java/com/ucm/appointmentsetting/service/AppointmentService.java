@@ -6,6 +6,7 @@ import com.ucm.appointmentsetting.dto.AppointmentSummaryResponse;
 import com.ucm.appointmentsetting.dto.AppointmentUpdateRequest;
 import com.ucm.appointmentsetting.entity.Appointment;
 import com.ucm.appointmentsetting.entity.Branch;
+import com.ucm.appointmentsetting.entity.BranchSchedule;
 import com.ucm.appointmentsetting.entity.Topic;
 import com.ucm.appointmentsetting.entity.User;
 import com.ucm.appointmentsetting.repository.AppointmentRepository;
@@ -19,9 +20,12 @@ import com.ucm.appointmentsetting.exception.InvalidTopicBranchException;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.time.DateTimeException;
+import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.util.ArrayList;
 import java.util.List;
 
 import static org.springframework.http.HttpStatus.BAD_REQUEST;
@@ -48,10 +52,17 @@ public class AppointmentService {
         this.appointmentEmailService = appointmentEmailService;
     }
 
-    public AppointmentBookingResponse bookAppointment(AppointmentRequest request) {
-        LocalDateTime dateTime = parseAndValidateAppointmentTime(request.getStartISO());
-        LocalDate date = dateTime.toLocalDate();
-        LocalTime time = dateTime.toLocalTime();
+public AppointmentBookingResponse bookAppointment(AppointmentRequest request) {
+    Branch branch = branchRepository
+        .findById(request.getBranchId())
+        .orElseThrow(() -> new RuntimeException("Branch not found"));
+
+    LocalDateTime dateTime =
+        parseAndValidateAppointmentTime(request.getStartISO(), branch);
+
+    LocalDate date = dateTime.toLocalDate();
+    LocalTime time = dateTime.toLocalTime();
+}
 
         boolean conflictExists = appointmentRepository.existsByBranchIdAndAppointmentDateAndAppointmentTime(
                 request.getBranchId(),
@@ -63,13 +74,13 @@ public class AppointmentService {
         }
 
         Topic topic = topicRepository.findById(request.getTopicId()).orElse(null);
-        Branch branch = branchRepository.findById(request.getBranchId()).orElse(null);
+        Branch branch2 = branchRepository.findById(request.getBranchId()).orElse(null);
         User user = null;
         if (request.getUserId() != null) {
             user = userRepository.findById(request.getUserId())
                     .orElseThrow(() -> new ResponseStatusException(NOT_FOUND, "User not found."));
         }
-        if (topic == null || branch == null || branch.getTopics() == null || !branch.getTopics().contains(topic)) {
+        if (topic == null || branch2 == null || branch2.getTopics() == null || !branch2.getTopics().contains(topic)) {
             throw new InvalidTopicBranchException("Selected topic is not available at the chosen branch.");
         }
 
@@ -110,7 +121,7 @@ public class AppointmentService {
 
         validateAccess(actor, appointment);
 
-        LocalDateTime dateTime = parseAndValidateAppointmentTime(request.getStartISO());
+        LocalDateTime dateTime = parseAndValidateAppointmentTime(request.getStartISO(), appointment.getBranch());
         LocalDate date = dateTime.toLocalDate();
         LocalTime time = dateTime.toLocalTime();
 
@@ -172,17 +183,68 @@ public class AppointmentService {
                 .toList();
     }
 
-    private LocalDateTime parseAndValidateAppointmentTime(String startISO) {
+    public List<String> getAvailableSlots(Long branchId, String dateISO) {
+        Branch branch = branchRepository.findById(branchId)
+                .orElseThrow(() -> new ResponseStatusException(NOT_FOUND, "Branch not found."));
+
+        LocalDate date;
+        try {
+            date = LocalDate.parse(dateISO);
+        } catch (DateTimeException ex) {
+            throw new ResponseStatusException(BAD_REQUEST, "Invalid date format.");
+        }
+
+        BranchSchedule schedule = findScheduleForBranch(branch, date);
+        LocalTime openingTime = schedule.getOpeningTime();
+        LocalTime lastStartTime = schedule.getClosingTime().minusMinutes(30);
+        LocalDateTime now = LocalDateTime.now();
+
+        List<LocalTime> bookedTimes = appointmentRepository.findByBranchIdAndAppointmentDate(branchId, date)
+                .stream()
+                .map(Appointment::getAppointmentTime)
+                .toList();
+
+        List<String> availableSlots = new ArrayList<>();
+        for (LocalTime current = openingTime; !current.isAfter(lastStartTime); current = current.plusMinutes(30)) {
+            LocalDateTime candidate = LocalDateTime.of(date, current);
+            if (!bookedTimes.contains(current) && !candidate.isBefore(now)) {
+                availableSlots.add(candidate.toString());
+            }
+        }
+
+        return availableSlots;
+    }
+
+    private BranchSchedule findScheduleForBranch(Branch branch, LocalDate date) {
+        if (branch == null) {
+            throw new ResponseStatusException(NOT_FOUND, "Branch not found.");
+        }
+
+        if (branch.getSchedules() == null || branch.getSchedules().isEmpty()) {
+            throw new OutsideBusinessHoursException("Branch schedule is not available for the selected branch.");
+        }
+
+        return branch.getSchedules().stream()
+                .filter(schedule -> schedule.getDayOfWeek() == date.getDayOfWeek())
+                .findFirst()
+                .orElseThrow(() -> new OutsideBusinessHoursException("Branch is closed on the selected date."));
+    }
+
+    private LocalDateTime parseAndValidateAppointmentTime(String startISO, Branch branch) {
         LocalDateTime dateTime = LocalDateTime.parse(startISO);
         if (dateTime.isBefore(LocalDateTime.now())) {
             throw new PastAppointmentException("Cannot book an appointment in the past.");
         }
 
+        BranchSchedule schedule = findScheduleForBranch(branch, dateTime.toLocalDate());
+        LocalTime openingTime = schedule.getOpeningTime();
+        LocalTime lastStartTime = schedule.getClosingTime().minusMinutes(30);
         LocalTime time = dateTime.toLocalTime();
-        LocalTime open = LocalTime.of(9, 0);
-        LocalTime last = LocalTime.of(16, 30);
-        if (time.isBefore(open) || time.isAfter(last)) {
-            throw new OutsideBusinessHoursException("Appointment time must be between 09:00 and 16:30.");
+        if (time.isBefore(openingTime) || time.isAfter(lastStartTime)) {
+            throw new OutsideBusinessHoursException(String.format(
+                    "Appointment time must be between %s and %s (last start).",
+                    openingTime, lastStartTime
+            ));
         }
 
         return dateTime;

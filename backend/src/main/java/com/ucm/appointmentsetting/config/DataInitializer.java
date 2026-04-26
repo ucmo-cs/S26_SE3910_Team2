@@ -1,6 +1,7 @@
 package com.ucm.appointmentsetting.config;
 
 import com.ucm.appointmentsetting.entity.Branch;
+import com.ucm.appointmentsetting.entity.BranchSchedule;
 import com.ucm.appointmentsetting.entity.Topic;
 import com.ucm.appointmentsetting.entity.User;
 import com.ucm.appointmentsetting.repository.BranchRepository;
@@ -14,6 +15,8 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.Order;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 
+import java.time.DayOfWeek;
+import java.time.LocalTime;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -85,8 +88,44 @@ public class DataInitializer {
             north.setState("MO");
             north.setZip("64155");
 
+            List<BranchSchedule> downtownSchedules = List.of(
+                    createSchedule(DayOfWeek.MONDAY, LocalTime.of(9, 0), LocalTime.of(17, 0), downtown),
+                    createSchedule(DayOfWeek.TUESDAY, LocalTime.of(9, 0), LocalTime.of(17, 0), downtown),
+                    createSchedule(DayOfWeek.WEDNESDAY, LocalTime.of(9, 0), LocalTime.of(17, 0), downtown),
+                    createSchedule(DayOfWeek.THURSDAY, LocalTime.of(9, 0), LocalTime.of(17, 0), downtown),
+                    createSchedule(DayOfWeek.FRIDAY, LocalTime.of(9, 0), LocalTime.of(17, 0), downtown),
+                    createSchedule(DayOfWeek.SATURDAY, LocalTime.of(9, 0), LocalTime.of(12, 0), downtown)
+            );
+            downtown.setSchedules(downtownSchedules);
+
+            List<BranchSchedule> southSchedules = List.of(
+                    createSchedule(DayOfWeek.MONDAY, LocalTime.of(10, 0), LocalTime.of(18, 0), south),
+                    createSchedule(DayOfWeek.TUESDAY, LocalTime.of(10, 0), LocalTime.of(18, 0), south),
+                    createSchedule(DayOfWeek.WEDNESDAY, LocalTime.of(10, 0), LocalTime.of(18, 0), south),
+                    createSchedule(DayOfWeek.THURSDAY, LocalTime.of(10, 0), LocalTime.of(18, 0), south),
+                    createSchedule(DayOfWeek.FRIDAY, LocalTime.of(10, 0), LocalTime.of(18, 0), south),
+                    createSchedule(DayOfWeek.SATURDAY, LocalTime.of(9, 0), LocalTime.of(13, 0), south)
+            );
+            south.setSchedules(southSchedules);
+
+            List<BranchSchedule> northSchedules = List.of(
+                    createSchedule(DayOfWeek.MONDAY, LocalTime.of(8, 30), LocalTime.of(16, 30), north),
+                    createSchedule(DayOfWeek.TUESDAY, LocalTime.of(8, 30), LocalTime.of(16, 30), north),
+                    createSchedule(DayOfWeek.WEDNESDAY, LocalTime.of(8, 30), LocalTime.of(16, 30), north),
+                    createSchedule(DayOfWeek.THURSDAY, LocalTime.of(8, 30), LocalTime.of(16, 30), north),
+                    createSchedule(DayOfWeek.FRIDAY, LocalTime.of(8, 30), LocalTime.of(16, 30), north),
+                    createSchedule(DayOfWeek.SATURDAY, LocalTime.of(9, 0), LocalTime.of(12, 0), north)
+            );
+            north.setSchedules(northSchedules);
+
             branchRepository.saveAll(List.of(downtown, south, north));
         };
+    }
+
+    private BranchSchedule createSchedule(DayOfWeek dayOfWeek, LocalTime openingTime, LocalTime closingTime, Branch branch) {
+        BranchSchedule schedule = new BranchSchedule(dayOfWeek, openingTime, closingTime);
+        schedule.setBranch(branch);
+        return schedule;
     }
 
     @Bean

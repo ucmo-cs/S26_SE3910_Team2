@@ -24,4 +24,6 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-mail'
     implementation 'org.springframework.security:spring-security-crypto'
     runtimeOnly 'com.mysql:mysql-connector-j'
+    // Added: For running unit and integration tests.
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
 }
