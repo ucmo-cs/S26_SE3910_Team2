@@ -20,4 +20,8 @@ public interface AppointmentRepository extends JpaRepository<Appointment, Long> 
     List<Appointment> findByUserIdOrderByAppointmentDateAscAppointmentTimeAsc(Long userId);
 
     List<Appointment> findByEmailIgnoreCaseAndUserIsNull(String email);
+
+    List<Appointment> findByBranchId(Long branchId);
+
+    List<Appointment>findByBranchIdAndAppointmentDate(Long branchId, LocalDate date);
 }
