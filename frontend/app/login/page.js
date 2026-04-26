@@ -18,16 +18,21 @@ const emptyLoginForm = {
   password: "",
 };
 
+const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
 export default function LoginPage() {
   const router = useRouter();
   const [mode, setMode] = useState("login");
   const [loginForm, setLoginForm] = useState(emptyLoginForm);
   const [signupForm, setSignupForm] = useState(emptySignupForm);
   const [error, setError] = useState("");
+  const [fieldErrors, setFieldErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const inputClass =
-    "mt-1 w-full rounded-2xl border border-slate-200 bg-white p-3 outline-none transition focus:border-[#006747] focus:ring-4 focus:ring-[#006747]/15";
+    "mt-1 w-full rounded-2xl border bg-white p-3 outline-none transition";
+  const validInputClass = "border-slate-200 focus:border-[#006747] focus:ring-4 focus:ring-[#006747]/15";
+  const invalidInputClass = "border-red-400 bg-red-50 focus:border-red-500 focus:ring-4 focus:ring-red-500/15";
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -49,6 +54,18 @@ export default function LoginPage() {
   async function handleSubmit(event) {
     event.preventDefault();
     setError("");
+
+    if (mode === "signup") {
+      const nextFieldErrors = validateSignupForm(signupForm);
+      setFieldErrors(nextFieldErrors);
+
+      if (Object.keys(nextFieldErrors).length > 0) {
+        return;
+      }
+    } else {
+      setFieldErrors({});
+    }
+
     setIsSubmitting(true);
 
     const endpoint = mode === "signup" ? "signup" : "login";
@@ -69,6 +86,15 @@ export default function LoginPage() {
         : await response.text().catch(() => "");
 
       if (!response.ok) {
+        if (mode === "signup") {
+          const backendFieldErrors = getSignupErrorsFromBackend(data);
+
+          if (Object.keys(backendFieldErrors).length > 0) {
+            setFieldErrors(backendFieldErrors);
+            return;
+          }
+        }
+
         if (typeof data === "string" && data.trim()) {
           setError(data);
           return;
@@ -92,6 +118,108 @@ export default function LoginPage() {
       ...current,
       [key]: value,
     }));
+
+    setError("");
+
+    if (mode !== "signup") {
+      return;
+    }
+
+    setFieldErrors((current) => {
+      if (!current[key]) {
+        return current;
+      }
+
+      const nextSignupForm = {
+        ...signupForm,
+        [key]: value,
+      };
+      const nextFieldErrors = validateSignupForm(nextSignupForm);
+
+      if (nextFieldErrors[key]) {
+        return {
+          ...current,
+          [key]: nextFieldErrors[key],
+        };
+      }
+
+      const updatedErrors = { ...current };
+      delete updatedErrors[key];
+      return updatedErrors;
+    });
+  }
+
+  function validateSignupForm(form) {
+    const errors = {};
+    const fullName = form.fullName.trim();
+    const phoneNumber = form.phoneNumber.trim();
+    const email = form.email.trim();
+    const username = form.username.trim();
+    const password = form.password.trim();
+
+    if (!fullName) {
+      errors.fullName = "Full name is required.";
+    }
+
+    if (!phoneNumber) {
+      errors.phoneNumber = "Phone number is required.";
+    }
+
+    if (!email) {
+      errors.email = "Email is required.";
+    } else if (!emailPattern.test(email)) {
+      errors.email = "Please enter a valid email address.";
+    }
+
+    if (!username) {
+      errors.username = "Username is required.";
+    }
+
+    if (!password) {
+      errors.password = "Password is required.";
+    } else if (password.length < 8) {
+      errors.password = "Password must be at least 8 characters.";
+    }
+
+    return errors;
+  }
+
+  function getSignupErrorsFromBackend(data) {
+    const message = typeof data === "string" ? data : data?.message || "";
+    const normalizedMessage = message.toLowerCase();
+
+    if (normalizedMessage.includes("email") && (normalizedMessage.includes("exist") || normalizedMessage.includes("use"))) {
+      return {
+        email: "This email is already in use.",
+      };
+    }
+
+    if (
+      normalizedMessage.includes("username") &&
+      (normalizedMessage.includes("taken") || normalizedMessage.includes("exist") || normalizedMessage.includes("use"))
+    ) {
+      return {
+        username: "This username is already taken.",
+      };
+    }
+
+    return {};
+  }
+
+  function getInputClass(fieldName) {
+    return `${inputClass} ${fieldErrors[fieldName] ? invalidInputClass : validInputClass}`;
+  }
+
+  function renderFieldError(fieldName) {
+    if (!fieldErrors[fieldName]) {
+      return null;
+    }
+
+    return (
+      <p id={`${fieldName}-error`} className="mt-1 text-sm font-medium text-red-600">
+        {fieldErrors[fieldName]}
+      </p>
+    );
   }
 
   return (
@@ -129,6 +257,7 @@ export default function LoginPage() {
               onClick={() => {
                 setMode("login");
                 setError("");
+                setFieldErrors({});
               }}
               className={`rounded-full px-4 py-2 text-sm font-semibold transition ${
                 mode === "login" ? "bg-white text-slate-900 shadow-sm" : "text-slate-500"
@@ -141,6 +270,7 @@ export default function LoginPage() {
               onClick={() => {
                 setMode("signup");
                 setError("");
+                setFieldErrors({});
               }}
               className={`rounded-full px-4 py-2 text-sm font-semibold transition ${
                 mode === "signup" ? "bg-white text-slate-900 shadow-sm" : "text-slate-500"
@@ -161,62 +291,89 @@ export default function LoginPage() {
             </p>
           </div>
 
-          <form className="mt-8 space-y-4" onSubmit={handleSubmit}>
+          <form className="mt-8 space-y-4" onSubmit={handleSubmit} noValidate>
             {mode === "signup" ? (
               <>
                 <div>
-                  <label className="text-sm font-semibold text-slate-700">Full Name</label>
+                  <label className="text-sm font-semibold text-slate-700" htmlFor="fullName">
+                    Full Name
+                  </label>
                   <input
-                    className={inputClass}
+                    id="fullName"
+                    className={getInputClass("fullName")}
                     value={signupForm.fullName}
                     onChange={(event) => updateForm(setSignupForm, "fullName", event.target.value)}
                     placeholder="Jane Doe"
                     required
+                    aria-invalid={Boolean(fieldErrors.fullName)}
+                    aria-describedby={fieldErrors.fullName ? "fullName-error" : undefined}
                   />
+                  {renderFieldError("fullName")}
                 </div>
 
                 <div>
-                  <label className="text-sm font-semibold text-slate-700">Phone Number</label>
+                  <label className="text-sm font-semibold text-slate-700" htmlFor="phoneNumber">
+                    Phone Number
+                  </label>
                   <input
-                    className={inputClass}
+                    id="phoneNumber"
+                    className={getInputClass("phoneNumber")}
                     value={signupForm.phoneNumber}
                     onChange={(event) => updateForm(setSignupForm, "phoneNumber", event.target.value)}
                     placeholder="816-555-0182"
                     required
+                    aria-invalid={Boolean(fieldErrors.phoneNumber)}
+                    aria-describedby={fieldErrors.phoneNumber ? "phoneNumber-error" : undefined}
                   />
+                  {renderFieldError("phoneNumber")}
                 </div>
 
                 <div>
-                  <label className="text-sm font-semibold text-slate-700">Email</label>
+                  <label className="text-sm font-semibold text-slate-700" htmlFor="email">
+                    Email
+                  </label>
                   <input
-                    className={inputClass}
+                    id="email"
+                    className={getInputClass("email")}
                     type="email"
                     value={signupForm.email}
                     onChange={(event) => updateForm(setSignupForm, "email", event.target.value)}
                     placeholder="jane@email.com"
                     required
+                    aria-invalid={Boolean(fieldErrors.email)}
+                    aria-describedby={fieldErrors.email ? "email-error" : undefined}
                   />
+                  {renderFieldError("email")}
                 </div>
               </>
             ) : null}
 
             <div>
-              <label className="text-sm font-semibold text-slate-700">Username</label>
+              <label className="text-sm font-semibold text-slate-700" htmlFor="username">
+                Username
+              </label>
               <input
-                className={inputClass}
+                id="username"
+                className={mode === "signup" ? getInputClass("username") : `${inputClass} ${validInputClass}`}
                 value={mode === "signup" ? signupForm.username : loginForm.username}
                 onChange={(event) =>
                   updateForm(mode === "signup" ? setSignupForm : setLoginForm, "username", event.target.value)
                 }
                 placeholder="jane_doe"
                 required
+                aria-invalid={mode === "signup" ? Boolean(fieldErrors.username) : undefined}
+                aria-describedby={mode === "signup" && fieldErrors.username ? "username-error" : undefined}
               />
+              {mode === "signup" ? renderFieldError("username") : null}
             </div>
 
             <div>
-              <label className="text-sm font-semibold text-slate-700">Password</label>
+              <label className="text-sm font-semibold text-slate-700" htmlFor="password">
+                Password
+              </label>
               <input
-                className={inputClass}
+                id="password"
+                className={mode === "signup" ? getInputClass("password") : `${inputClass} ${validInputClass}`}
                 type="password"
                 value={mode === "signup" ? signupForm.password : loginForm.password}
                 onChange={(event) =>
@@ -224,7 +381,10 @@ export default function LoginPage() {
                 }
                 placeholder={mode === "signup" ? "At least 8 characters" : "Your password"}
                 required
+                aria-invalid={mode === "signup" ? Boolean(fieldErrors.password) : undefined}
+                aria-describedby={mode === "signup" && fieldErrors.password ? "password-error" : undefined}
               />
+              {mode === "signup" ? renderFieldError("password") : null}
             </div>
 
             {error ? (
