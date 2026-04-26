@@ -22,6 +22,10 @@ import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.List;
 
+import java.time.LocalDate;
+import java.time.LocalTime;
+import java.util.List;
+
 @RestController
 @CrossOrigin(origins = "http://localhost:3000")
 @RequestMapping("/api/appointments")
@@ -49,6 +53,11 @@ public class AppointmentController {
         return ResponseEntity.ok(appointment);
     }
 
+    @GetMapping("/available-slots") 
+    public List<String> getAvailableSlots(@RequestParam Long branchId, @RequestParam String dateISO) { 
+        return appointmentService.getAvailableSlots(branchId, dateISO);
+     }
+     
     @PutMapping("/{id}")
     public ResponseEntity<AppointmentSummaryResponse> updateAppointment(
             @PathVariable Long id,
