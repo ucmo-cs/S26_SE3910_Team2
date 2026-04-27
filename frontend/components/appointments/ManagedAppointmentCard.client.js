@@ -20,10 +20,24 @@ function formatAppointmentDate(appointment) {
 }
 
 function formatSlotLabel(iso) {
+  const match = iso.match(
+    /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})(?::(\d{2}))?$/
+  );
+  const date = match
+    ? new Date(
+        Number(match[1]),
+        Number(match[2]) - 1,
+        Number(match[3]),
+        Number(match[4]),
+        Number(match[5]),
+        Number(match[6] || "00")
+      )
+    : new Date(iso);
+
   return new Intl.DateTimeFormat("en-US", {
     hour: "numeric",
     minute: "2-digit",
-  }).format(new Date(iso));
+  }).format(date);
 }
 
 function dateKeyFromValue(value) {
@@ -36,6 +50,28 @@ function dateKeyFromValue(value) {
 
 function buildSlotIso(dateKey, timeValue) {
   return `${dateKey}T${timeValue}:00`;
+}
+
+function normalizeSlotIso(value) {
+  return value.length === 16 ? `${value}:00` : value;
+}
+
+async function readErrorMessage(response, fallbackMessage) {
+  const contentType = response.headers.get("content-type") || "";
+
+  if (contentType.includes("application/json")) {
+    const data = await response.json().catch(() => null);
+    if (data && typeof data.message === "string" && data.message.trim()) {
+      return data.message;
+    }
+  } else {
+    const text = await response.text().catch(() => "");
+    if (text.trim()) {
+      return text;
+    }
+  }
+
+  return fallbackMessage;
 }
 
 export default function ManagedAppointmentCard({
@@ -65,16 +101,18 @@ export default function ManagedAppointmentCard({
 
     try {
       const response = await fetch(
-        `http://localhost:8080/api/availability?branchId=${appointment.branchId}&date=${dateKey}`
+        `http://localhost:8080/api/appointments/available-slots?branchId=${appointment.branchId}&dateISO=${dateKey}`
       );
-      const data = await response.json().catch(() => []);
       if (!response.ok) {
         setAvailableSlots([]);
-        setActionError("We couldn't load available time slots.");
+        setActionError(
+          await readErrorMessage(response, "We couldn't load available time slots.")
+        );
         return;
       }
 
-      const slotValues = data.map((time) => buildSlotIso(dateKey, time));
+      const data = await response.json().catch(() => []);
+      const slotValues = data.map(normalizeSlotIso);
       const nextSlots =
         dateKey === appointment.appointmentDate && !slotValues.includes(currentSlotIso)
           ? [...slotValues, currentSlotIso].sort()
@@ -137,16 +175,14 @@ export default function ManagedAppointmentCard({
         }),
       });
 
-      const contentType = response.headers.get("content-type") || "";
-      const data = contentType.includes("application/json")
-        ? await response.json().catch(() => null)
-        : await response.text().catch(() => "");
-
       if (!response.ok) {
-        setActionError(typeof data === "string" && data.trim() ? data : "We couldn't reschedule this appointment.");
+        setActionError(
+          await readErrorMessage(response, "We couldn't reschedule this appointment.")
+        );
         return;
       }
 
+      const data = await response.json().catch(() => null);
       onUpdated(data);
       setIsEditing(false);
     } catch {

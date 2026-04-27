@@ -145,9 +145,6 @@ export default function ConfirmationPage() {
 
   return (
     <main className="min-h-screen bg-gradient-to-b from-white via-white to-slate-50">
-      {/* Top accent bar */}
-      <div className="h-2 w-full bg-[#78be20]" />
-
       <div className="mx-auto max-w-4xl px-6 py-12">
         {/* Header */}
         <div className="fade-up rounded-2xl border border-slate-200 bg-white p-8 shadow-sm">
@@ -223,8 +220,6 @@ export default function ConfirmationPage() {
                   Reserved
                 </span>
               </div>
-
-              <div className="mt-5 h-1 w-20 bg-[#006747]" />
 
               {emailStatus ? (
                 <div

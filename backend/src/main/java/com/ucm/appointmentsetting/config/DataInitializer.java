@@ -63,60 +63,48 @@ public class DataInitializer {
     @Order(2)
     CommandLineRunner seedBranches(BranchRepository branchRepository) {
         return args -> {
-            if (branchRepository.count() > 0) {
-                return;
+            Map<String, Branch> branchesByName = branchRepository.findAll()
+                    .stream()
+                    .collect(Collectors.toMap(Branch::getName, Function.identity()));
+
+            Branch downtown = branchesByName.getOrDefault("Downtown Branch", new Branch());
+            populateBranch(downtown, "Downtown Branch", "123 Main St", "Kansas City", "MO", "64105");
+            if (downtown.getId() == null || !hasSchedules(downtown.getId())) {
+                downtown.setSchedules(List.of(
+                        createSchedule(DayOfWeek.MONDAY, LocalTime.of(9, 0), LocalTime.of(17, 0), downtown),
+                        createSchedule(DayOfWeek.TUESDAY, LocalTime.of(9, 0), LocalTime.of(17, 0), downtown),
+                        createSchedule(DayOfWeek.WEDNESDAY, LocalTime.of(9, 0), LocalTime.of(17, 0), downtown),
+                        createSchedule(DayOfWeek.THURSDAY, LocalTime.of(9, 0), LocalTime.of(17, 0), downtown),
+                        createSchedule(DayOfWeek.FRIDAY, LocalTime.of(9, 0), LocalTime.of(17, 0), downtown),
+                        createSchedule(DayOfWeek.SATURDAY, LocalTime.of(9, 0), LocalTime.of(12, 0), downtown)
+                ));
             }
 
-            Branch downtown = new Branch();
-            downtown.setName("Downtown Branch");
-            downtown.setAddress("123 Main St");
-            downtown.setCity("Kansas City");
-            downtown.setState("MO");
-            downtown.setZip("64105");
+            Branch south = branchesByName.getOrDefault("South Branch", new Branch());
+            populateBranch(south, "South Branch", "456 Oak Ave", "Kansas City", "MO", "64131");
+            if (south.getId() == null || !hasSchedules(south.getId())) {
+                south.setSchedules(List.of(
+                        createSchedule(DayOfWeek.MONDAY, LocalTime.of(10, 0), LocalTime.of(18, 0), south),
+                        createSchedule(DayOfWeek.TUESDAY, LocalTime.of(10, 0), LocalTime.of(18, 0), south),
+                        createSchedule(DayOfWeek.WEDNESDAY, LocalTime.of(10, 0), LocalTime.of(18, 0), south),
+                        createSchedule(DayOfWeek.THURSDAY, LocalTime.of(10, 0), LocalTime.of(18, 0), south),
+                        createSchedule(DayOfWeek.FRIDAY, LocalTime.of(10, 0), LocalTime.of(18, 0), south),
+                        createSchedule(DayOfWeek.SATURDAY, LocalTime.of(9, 0), LocalTime.of(13, 0), south)
+                ));
+            }
 
-            Branch south = new Branch();
-            south.setName("South Branch");
-            south.setAddress("456 Oak Ave");
-            south.setCity("Kansas City");
-            south.setState("MO");
-            south.setZip("64131");
-
-            Branch north = new Branch();
-            north.setName("North Branch");
-            north.setAddress("789 Pine Rd");
-            north.setCity("Kansas City");
-            north.setState("MO");
-            north.setZip("64155");
-
-            List<BranchSchedule> downtownSchedules = List.of(
-                    createSchedule(DayOfWeek.MONDAY, LocalTime.of(9, 0), LocalTime.of(17, 0), downtown),
-                    createSchedule(DayOfWeek.TUESDAY, LocalTime.of(9, 0), LocalTime.of(17, 0), downtown),
-                    createSchedule(DayOfWeek.WEDNESDAY, LocalTime.of(9, 0), LocalTime.of(17, 0), downtown),
-                    createSchedule(DayOfWeek.THURSDAY, LocalTime.of(9, 0), LocalTime.of(17, 0), downtown),
-                    createSchedule(DayOfWeek.FRIDAY, LocalTime.of(9, 0), LocalTime.of(17, 0), downtown),
-                    createSchedule(DayOfWeek.SATURDAY, LocalTime.of(9, 0), LocalTime.of(12, 0), downtown)
-            );
-            downtown.setSchedules(downtownSchedules);
-
-            List<BranchSchedule> southSchedules = List.of(
-                    createSchedule(DayOfWeek.MONDAY, LocalTime.of(10, 0), LocalTime.of(18, 0), south),
-                    createSchedule(DayOfWeek.TUESDAY, LocalTime.of(10, 0), LocalTime.of(18, 0), south),
-                    createSchedule(DayOfWeek.WEDNESDAY, LocalTime.of(10, 0), LocalTime.of(18, 0), south),
-                    createSchedule(DayOfWeek.THURSDAY, LocalTime.of(10, 0), LocalTime.of(18, 0), south),
-                    createSchedule(DayOfWeek.FRIDAY, LocalTime.of(10, 0), LocalTime.of(18, 0), south),
-                    createSchedule(DayOfWeek.SATURDAY, LocalTime.of(9, 0), LocalTime.of(13, 0), south)
-            );
-            south.setSchedules(southSchedules);
-
-            List<BranchSchedule> northSchedules = List.of(
-                    createSchedule(DayOfWeek.MONDAY, LocalTime.of(8, 30), LocalTime.of(16, 30), north),
-                    createSchedule(DayOfWeek.TUESDAY, LocalTime.of(8, 30), LocalTime.of(16, 30), north),
-                    createSchedule(DayOfWeek.WEDNESDAY, LocalTime.of(8, 30), LocalTime.of(16, 30), north),
-                    createSchedule(DayOfWeek.THURSDAY, LocalTime.of(8, 30), LocalTime.of(16, 30), north),
-                    createSchedule(DayOfWeek.FRIDAY, LocalTime.of(8, 30), LocalTime.of(16, 30), north),
-                    createSchedule(DayOfWeek.SATURDAY, LocalTime.of(9, 0), LocalTime.of(12, 0), north)
-            );
-            north.setSchedules(northSchedules);
+            Branch north = branchesByName.getOrDefault("North Branch", new Branch());
+            populateBranch(north, "North Branch", "789 Pine Rd", "Kansas City", "MO", "64155");
+            if (north.getId() == null || !hasSchedules(north.getId())) {
+                north.setSchedules(List.of(
+                        createSchedule(DayOfWeek.MONDAY, LocalTime.of(8, 30), LocalTime.of(16, 30), north),
+                        createSchedule(DayOfWeek.TUESDAY, LocalTime.of(8, 30), LocalTime.of(16, 30), north),
+                        createSchedule(DayOfWeek.WEDNESDAY, LocalTime.of(8, 30), LocalTime.of(16, 30), north),
+                        createSchedule(DayOfWeek.THURSDAY, LocalTime.of(8, 30), LocalTime.of(16, 30), north),
+                        createSchedule(DayOfWeek.FRIDAY, LocalTime.of(8, 30), LocalTime.of(16, 30), north),
+                        createSchedule(DayOfWeek.SATURDAY, LocalTime.of(9, 0), LocalTime.of(12, 0), north)
+                ));
+            }
 
             branchRepository.saveAll(List.of(downtown, south, north));
         };
@@ -126,6 +114,22 @@ public class DataInitializer {
         BranchSchedule schedule = new BranchSchedule(dayOfWeek, openingTime, closingTime);
         schedule.setBranch(branch);
         return schedule;
+    }
+
+    private void populateBranch(Branch branch, String name, String address, String city, String state, String zip) {
+        branch.setName(name);
+        branch.setAddress(address);
+        branch.setCity(city);
+        branch.setState(state);
+        branch.setZip(zip);
+    }
+
+    private boolean hasSchedules(Long branchId) {
+        Long scheduleCount = entityManager.createQuery(
+                "select count(s) from BranchSchedule s where s.branch.id = :branchId",
+                Long.class
+        ).setParameter("branchId", branchId).getSingleResult();
+        return scheduleCount != null && scheduleCount > 0;
     }
 
     @Bean

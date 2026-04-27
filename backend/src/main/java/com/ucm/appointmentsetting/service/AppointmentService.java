@@ -52,17 +52,13 @@ public class AppointmentService {
         this.appointmentEmailService = appointmentEmailService;
     }
 
-public AppointmentBookingResponse bookAppointment(AppointmentRequest request) {
-    Branch branch = branchRepository
-        .findById(request.getBranchId())
-        .orElseThrow(() -> new RuntimeException("Branch not found"));
+    public AppointmentBookingResponse bookAppointment(AppointmentRequest request) {
+        Branch branch = branchRepository.findById(request.getBranchId())
+                .orElseThrow(() -> new RuntimeException("Branch not found"));
 
-    LocalDateTime dateTime =
-        parseAndValidateAppointmentTime(request.getStartISO(), branch);
-
-    LocalDate date = dateTime.toLocalDate();
-    LocalTime time = dateTime.toLocalTime();
-}
+        LocalDateTime dateTime = parseAndValidateAppointmentTime(request.getStartISO(), branch);
+        LocalDate date = dateTime.toLocalDate();
+        LocalTime time = dateTime.toLocalTime();
 
         boolean conflictExists = appointmentRepository.existsByBranchIdAndAppointmentDateAndAppointmentTime(
                 request.getBranchId(),
@@ -74,13 +70,12 @@ public AppointmentBookingResponse bookAppointment(AppointmentRequest request) {
         }
 
         Topic topic = topicRepository.findById(request.getTopicId()).orElse(null);
-        Branch branch2 = branchRepository.findById(request.getBranchId()).orElse(null);
         User user = null;
         if (request.getUserId() != null) {
             user = userRepository.findById(request.getUserId())
                     .orElseThrow(() -> new ResponseStatusException(NOT_FOUND, "User not found."));
         }
-        if (topic == null || branch2 == null || branch2.getTopics() == null || !branch2.getTopics().contains(topic)) {
+        if (topic == null || branch.getTopics() == null || !branch.getTopics().contains(topic)) {
             throw new InvalidTopicBranchException("Selected topic is not available at the chosen branch.");
         }
 
