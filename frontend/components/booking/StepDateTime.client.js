@@ -4,6 +4,7 @@ import { formatDate, formatTimeFromISO } from "../../lib/format";
 
 export default function StepDateTime({
   days,
+  availableDateKeys,
   dateISO,
   setDateISO,
   slots,
@@ -14,8 +15,6 @@ export default function StepDateTime({
   slotUnavailable,
   staleSlotISO,
 }) {
-  const now = new Date();
-
   function getLocalDateKey(value) {
     const date = new Date(value);
     const year = date.getFullYear();
@@ -24,33 +23,9 @@ export default function StepDateTime({
     return `${year}-${month}-${day}`;
   }
 
-  function buildAllSlotsForDate(value) {
-    const dayKey = getLocalDateKey(value);
-
-    return Array.from({ length: 16 }, (_, index) => {
-      const hour = String(9 + Math.floor(index / 2)).padStart(2, "0");
-      const minute = index % 2 === 0 ? "00" : "30";
-      return `${dayKey}T${hour}:${minute}:00`;
-    });
-  }
-
-  const todayKey = getLocalDateKey(now);
-
-  const allSlots = dateISO ? buildAllSlotsForDate(dateISO) : [];
-
-  // KEEP: hide past times for today
-  const visibleSlots =
-    dateISO && getLocalDateKey(dateISO) === todayKey
-      ? allSlots.filter((iso) => new Date(iso) > now)
-      : allSlots;
-
   const visibleDays = days.filter((d) => {
     const dayKey = getLocalDateKey(d);
-
-    if (dayKey !== todayKey) return true;
-
-    const todaysSlots = buildAllSlotsForDate(d);
-    return todaysSlots.some((iso) => new Date(iso) > now);
+    return availableDateKeys.includes(dayKey);
   });
 
   function handleSelectSlot(iso) {
@@ -76,31 +51,37 @@ export default function StepDateTime({
           {/* Dates */}
           <div>
             <p className="text-sm font-semibold text-slate-700">Choose a date</p>
-            <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-              {visibleDays.map((d) => {
-                const iso = new Date(d).toISOString();
-                const active = iso === dateISO;
+            {visibleDays.length ? (
+              <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+                {visibleDays.map((d) => {
+                  const iso = new Date(d).toISOString();
+                  const active = iso === dateISO;
 
-                return (
-                  <button
-                    key={iso}
-                    onClick={() => setDateISO(iso)}
-                    className={`rounded-2xl border px-4 py-3 text-left text-sm transition-all duration-200 ${
-                      active
-                        ? "border-[#006747] bg-[#006747]/5 shadow-sm"
-                        : "border-slate-200 bg-white hover:-translate-y-0.5 hover:bg-slate-50 hover:shadow-md"
-                    }`}
-                  >
-                    <div className="font-semibold text-slate-900">
-                      {formatDate(d)}
-                    </div>
-                    <div className="mt-1 text-xs text-slate-500">
-                      {active ? "Selected" : "Select"}
-                    </div>
-                  </button>
-                );
-              })}
-            </div>
+                  return (
+                    <button
+                      key={iso}
+                      onClick={() => setDateISO(iso)}
+                      className={`rounded-2xl border px-4 py-3 text-left text-sm transition-all duration-200 ${
+                        active
+                          ? "border-[#006747] bg-[#006747]/5 shadow-sm"
+                          : "border-slate-200 bg-white hover:-translate-y-0.5 hover:bg-slate-50 hover:shadow-md"
+                      }`}
+                    >
+                      <div className="font-semibold text-slate-900">
+                        {formatDate(d)}
+                      </div>
+                      <div className="mt-1 text-xs text-slate-500">
+                        {active ? "Selected" : "Select"}
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+            ) : (
+              <div className="mt-3 rounded-2xl border border-slate-200 bg-slate-50 p-5 text-slate-700">
+                No upcoming days have available appointments for this branch.
+              </div>
+            )}
           </div>
 
           {/* Times */}
@@ -132,23 +113,19 @@ export default function StepDateTime({
                 ) : null}
 
                 <div className="mt-3 flex flex-wrap gap-3">
-                  {visibleSlots.map((iso) => {
+                  {slots.map((iso) => {
                     const active = iso === slotISO;
-                    const available = slots.includes(iso);
                     const stale = slotUnavailable && iso === staleSlotISO;
 
                     return (
                       <button
                         type="button"
                         key={iso}
-                        disabled={!available}
                         onClick={() => handleSelectSlot(iso)}
                         className={`rounded-full border px-4 py-1.5 text-sm transition-all duration-200 ${
                           active
                             ? "border-[#006747] bg-[#006747]/10 text-slate-900"
-                            : available
-                              ? "border-slate-200 bg-white hover:-translate-y-0.5 hover:bg-slate-50 hover:shadow-sm"
-                              : "cursor-not-allowed border-red-200 bg-red-50 text-red-700 opacity-90"
+                            : "border-slate-200 bg-white hover:-translate-y-0.5 hover:bg-slate-50 hover:shadow-sm"
                         }`}
                       >
                         {formatTimeFromISO(iso)}

@@ -36,6 +36,7 @@ export default function BookingWizard() {
   const [user, setUser] = useState(null);
   const [emailValid, setEmailValid] = useState(false);
   const [slotsForSelectedDay, setSlotsForSelectedDay] = useState([]);
+  const [availableDateKeys, setAvailableDateKeys] = useState([]);
   const [isLoadingAvailability, setIsLoadingAvailability] = useState(false);
   const [submitError, setSubmitError] = useState("");
   const [slotUnavailable, setSlotUnavailable] = useState(false);
@@ -44,6 +45,24 @@ export default function BookingWizard() {
   const [branches, setBranches] = useState([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const latestSlotISO = useRef("");
+
+  async function readErrorMessage(response, fallbackMessage) {
+    const contentType = response.headers.get("content-type") || "";
+
+    if (contentType.includes("application/json")) {
+      const data = await response.json().catch(() => null);
+      if (data && typeof data.message === "string" && data.message.trim()) {
+        return data.message;
+      }
+    } else {
+      const text = await response.text().catch(() => "");
+      if (text.trim()) {
+        return text;
+      }
+    }
+
+    return fallbackMessage;
+  }
 
   useEffect(() => {
     latestSlotISO.current = slotISO;
@@ -112,6 +131,61 @@ export default function BookingWizard() {
   const selectedTopic = topics.find((t) => String(t.id) === String(topicId)) || null;
 
   useEffect(() => {
+    let cancelled = false;
+
+    async function loadAvailableDates() {
+      if (!branchId) {
+        setAvailableDateKeys([]);
+        return;
+      }
+
+      const dateKeys = days.map((day) => day.toISOString().slice(0, 10));
+
+      try {
+        const results = await Promise.all(
+          dateKeys.map(async (dateKey) => {
+            const response = await fetch(
+              `http://localhost:8080/api/appointments/available-slots?branchId=${branchId}&dateISO=${dateKey}`
+            );
+
+            if (!response.ok) {
+              return { dateKey, hasSlots: false };
+            }
+
+            const slots = await response.json().catch(() => []);
+            return { dateKey, hasSlots: Array.isArray(slots) && slots.length > 0 };
+          })
+        );
+
+        if (cancelled) {
+          return;
+        }
+
+        const nextAvailableDateKeys = results
+          .filter((result) => result.hasSlots)
+          .map((result) => result.dateKey);
+
+        setAvailableDateKeys(nextAvailableDateKeys);
+
+        if (dateISO && !nextAvailableDateKeys.includes(dateISO.slice(0, 10))) {
+          setDateISO("");
+          setSlotISO("");
+        }
+      } catch {
+        if (!cancelled) {
+          setAvailableDateKeys([]);
+        }
+      }
+    }
+
+    loadAvailableDates();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [branchId, days]);
+
+  useEffect(() => {
     async function loadAvailability() {
       if (!branchId || !dateISO) {
         setSlotsForSelectedDay([]);
@@ -124,7 +198,7 @@ export default function BookingWizard() {
 
       try {
         const response = await fetch(
-          `http://localhost:8080/api/availability?branchId=${branchId}&date=${dateKey}`
+          `http://localhost:8080/api/appointments/available-slots?branchId=${branchId}&dateISO=${dateKey}`
         );
 
         if (!response.ok) {
@@ -133,8 +207,7 @@ export default function BookingWizard() {
           return;
         }
 
-        const times = await response.json();
-        const nextSlots = times.map((time) => `${dateKey}T${time}:00`);
+        const nextSlots = await response.json();
 
         setSlotsForSelectedDay(nextSlots);
 
@@ -208,7 +281,11 @@ export default function BookingWizard() {
       }
 
       if (!response.ok) {
-        setSubmitError("This time slot is no longer available");
+        const message = await readErrorMessage(
+          response,
+          "This time slot is no longer available."
+        );
+        setSubmitError(message);
         setIsSubmitting(false);
         return;
       }
@@ -279,6 +356,7 @@ export default function BookingWizard() {
         {step === 2 && (
           <StepDateTime
             days={days}
+            availableDateKeys={availableDateKeys}
             dateISO={dateISO}
             setDateISO={(iso) => {
               setDateISO(iso);
